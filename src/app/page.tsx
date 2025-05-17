@@ -14,6 +14,26 @@ export default function Home() {
   const [dropped, setDropped] = useState<DroppedAnnotation[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(600); // 임시 기본값
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  
+  // 업로드 처리 함수
+  async function uploadPdfToBackend(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE_URL}/pdf/upload`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const errorText = await res.text(); // JSON이 아닐 수도 있음
+      throw new Error(`서버 응답 실패: ${res.status} ${errorText}`);
+    }
+    
+    const data = await res.json();
+    return data.url; // 저장된 파일 경로 (/uploads/12345.pdf)
+  }
+
 
   async function handleSaveWithAnnotations(
     file: File,
@@ -53,16 +73,18 @@ export default function Home() {
   return (
     <div className="flex flex-col h-screen">
       <div className="p-4 flex gap-4 bg-white shadow z-10">
-        <input
-          type="file"
-          accept="application/pdf"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) setPdfFile(file);
-          }}
-          className="hidden"
-          id="pdf-upload"
-        />
+<input
+  type="file"
+  id="pdf-upload" 
+  accept="application/pdf"
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPdfFile(file);
+
+      uploadPdfToBackend(file);
+    }
+  }}></input>
         <label
           htmlFor="pdf-upload"
           className="px-4 py-2 bg-gray-600 text-white rounded cursor-pointer"
