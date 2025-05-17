@@ -2,7 +2,7 @@
 
 import PDFViewer from "@/components/PDFViewer";
 import AnnotationPanel from "@/components/AnnotationPanel";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { saveAs } from "file-saver";
@@ -22,6 +22,36 @@ export default function Home() {
   );
   const [recordingText, setRecordingText] = useState<string>("");
 
+  // WebSocket 상태
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+
+  // WebSocket 연결 초기화
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:8080/ws/audio");
+    setSocket(ws);
+
+    ws.onopen = () => {
+      console.log("WebSocket 연결됨");
+    };
+
+    ws.onmessage = (event) => {
+      console.log("서버 응답:", event.data);
+      // TODO: 추후 텍스트 수신 시 UI에 표시
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket 오류:", err);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket 연결 종료됨");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
   // 녹음 시작
   async function startRecording() {
     try {
@@ -31,10 +61,15 @@ export default function Home() {
       setIsRecording(true);
       setRecordingText("녹음 중...");
 
-      recorder.start();
+      recorder.start(250); // chunk 단위 설정할 수 있음 (250ms로 설정함)
 
       recorder.ondataavailable = (e) => {
-        // 추후 WebSocket으로 전송할 수도 있음
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(e.data); // [ADD] WebSocket으로 chunk 전송
+          console.log("chunk 전송됨:", e.data);
+        } else {
+          console.warn("WebSocket이 연결되지 않음. chunk 전송 실패");
+        }
         console.log("녹음된 chunk:", e.data);
       };
 
@@ -60,7 +95,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(`${API_BASE_URL}/pdf/upload`, {
+    const res = await fetch(`${API_BASE_URL}/api/pdf/upload`, {
       method: "POST",
       body: formData,
     });
