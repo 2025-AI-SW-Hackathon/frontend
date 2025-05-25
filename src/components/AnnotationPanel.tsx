@@ -1,39 +1,26 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
-interface Annotation {
-  id: string;
-  text: string;
-}
+import React, { useState } from "react";
+import { useAnnotation } from "./AnnotationContext";
+import { Pencil } from "lucide-react";
 
 export default function AnnotationPanel() {
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const { annotations, editAnnotation } = useAnnotation(); // ✅ editAnnotation 추가
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
-  useEffect(() => {
-    const mockTexts = [
-      "이건 첫 번째 요약 문장입니다.",
-      "교수님이 강조한 핵심 개념이에요.",
-      "중요! 이건 시험에 나올 가능성 있음.",
-      "예시를 통해 이해하면 좋아요.",
-    ];
+  const startEdit = (id: string, text: string) => {
+    setEditingId(id);
+    setEditValue(text);
+  };
 
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < mockTexts.length) {
-        setAnnotations((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            text: mockTexts[index],
-          },
-        ]);
-        index++;
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const finishEdit = () => {
+    if (editingId !== null) {
+      editAnnotation(editingId, editValue); 
+      setEditingId(null);
+      setEditValue("");
+    }
+  };
 
   return (
     <div className="w-1/3 h-full bg-white border-l p-4 overflow-y-auto">
@@ -42,13 +29,39 @@ export default function AnnotationPanel() {
         {annotations.map((anno) => (
           <div
             key={anno.id}
-            className="bg-blue-100 rounded p-2 shadow text-sm cursor-move"
+            className="bg-blue-100 rounded p-2 shadow text-sm group flex justify-between items-center"
             draggable
             onDragStart={(e) => {
               e.dataTransfer.setData("text/plain", JSON.stringify(anno));
             }}
           >
-            {anno.text}
+            {editingId === anno.id ? (
+              <input
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={finishEdit}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") finishEdit();
+                }}
+                autoFocus
+                className="w-full bg-white border p-1 text-sm rounded"
+              />
+            ) : (
+              <>
+                <div className="flex-1">
+                  {anno.text}
+                  {anno.markdown && (
+                    <div className="text-xs text-gray-600 mt-1">{anno.markdown}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => startEdit(anno.id, anno.text)}
+                  className="ml-2 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <Pencil size={16} />
+                </button>
+              </>
+            )}
           </div>
         ))}
       </div>
