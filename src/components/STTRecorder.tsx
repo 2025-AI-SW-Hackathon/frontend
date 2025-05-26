@@ -1,5 +1,3 @@
-// components/STTRecorder.tsx
-
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -7,26 +5,11 @@ import { useEffect, useRef, useState } from "react";
 export default function STTRecorder() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
-  useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080/ws/audio");
-    setSocket(ws);
-
-    ws.onopen = () => console.log("WebSocket 연결됨");
-    ws.onmessage = (event) => {
-      console.log("서버 응답:", event.data); // STT 결과가 여기 들어옴
-    };
-    ws.onerror = (err) => console.error("WebSocket 오류:", err);
-    ws.onclose = () => console.log("WebSocket 연결 종료됨");
-
-    return () => {
-      ws.close();
-    };
-  }, []);
 
   const convertFloat32ToInt16 = (buffer: Float32Array) => {
     const l = buffer.length;
@@ -41,38 +24,59 @@ export default function STTRecorder() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      const ws = new WebSocket("ws://localhost:8080/ws/audio");
+      setSocket(ws);
 
-      const audioContext = new AudioContext({ sampleRate: 16000 });
-      audioContextRef.current = audioContext;
+      ws.onopen = async () => {
+        console.log("WebSocket 연결됨");
 
-      const source = audioContext.createMediaStreamSource(stream);
-      sourceRef.current = source;
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
 
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
+        const audioContext = new AudioContext({ sampleRate: 16000 });
+        audioContextRef.current = audioContext;
 
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+        const source = audioContext.createMediaStreamSource(stream);
+        sourceRef.current = source;
 
-      processor.onaudioprocess = (e) => {
-        const input = e.inputBuffer.getChannelData(0);
-        const pcm = convertFloat32ToInt16(input);
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);  // 버퍼 크기, 입력 채널, 출력 채널
+        processorRef.current = processor;
 
-        if (socket?.readyState === WebSocket.OPEN) {
-          socket.send(pcm.buffer);
-        }
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = (e) => {
+          const input = e.inputBuffer.getChannelData(0);
+          const pcm = convertFloat32ToInt16(input);
+
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(pcm.buffer);
+          }
+        };
+
+        setIsRecording(true);
       };
 
-      setIsRecording(true);
+      ws.onmessage = (event) => {
+        console.log("서버 응답:", event.data);
+      };
+
+      ws.onerror = (err) => {
+        console.error("WebSocket 오류:", err);
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket 연결 종료됨");
+        stopRecordingInternal();
+        setSocket(null);
+      };
     } catch (err) {
-      console.error("마이크 접근 실패:", err);
-      alert("마이크 권한이 필요합니다.");
+      console.error("녹음 시작 실패:", err);
+      alert("마이크 권한이 필요하거나 연결에 실패했습니다.");
     }
   };
 
-  const stopRecording = () => {
+  const stopRecordingInternal = () => {
     processorRef.current?.disconnect();
     sourceRef.current?.disconnect();
     audioContextRef.current?.close();
@@ -85,6 +89,15 @@ export default function STTRecorder() {
     streamRef.current = null;
 
     setIsRecording(false);
+  };
+
+  const stopRecording = () => {
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.close(); // 서버에서도 STT 세션 종료됨
+    } else {
+      stopRecordingInternal();
+      setSocket(null);
+    }
   };
 
   return (
