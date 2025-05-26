@@ -11,12 +11,11 @@ interface Annotation {
 interface AnnotationContextType {
   annotations: Annotation[];
   addAnnotation: (a: Annotation) => void;
-  editAnnotation: (id: string, newText: string) => void; // ✅ 이거 추가해줘야 함
-
+  editAnnotation: (id: string, newText: string) => void;
+  setAnnotations: React.Dispatch<React.SetStateAction<Annotation[]>>; // ✅ 추가
 }
 
 const AnnotationContext = createContext<AnnotationContextType | null>(null);
-
 
 export function AnnotationProvider({ children }: { children: React.ReactNode }) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -24,6 +23,7 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
   const addAnnotation = (a: Annotation) => {
     setAnnotations((prev) => [...prev, a]);
   };
+
   const editAnnotation = (id: string, newText: string) => {
     setAnnotations((prev) =>
       prev.map((a) => (a.id === id ? { ...a, text: newText } : a))
@@ -31,7 +31,9 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <AnnotationContext.Provider value={{ annotations, addAnnotation, editAnnotation }}>
+    <AnnotationContext.Provider
+      value={{ annotations, addAnnotation, editAnnotation, setAnnotations }} // ✅ 추가됨
+    >
       {children}
     </AnnotationContext.Provider>
   );
@@ -39,6 +41,7 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
 
 export const useAnnotation = () => {
   const context = useContext(AnnotationContext);
-  if (!context) throw new Error("useAnnotation must be used within AnnotationProvider");
+  if (!context)
+    throw new Error("useAnnotation must be used within AnnotationProvider");
   return context;
 };

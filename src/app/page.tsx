@@ -16,6 +16,7 @@ export default function Home() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(600); // 임시 기본값
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [renderedSizes, setRenderedSizes] = useState<Record<number, { width: number; height: number }>>({});
 
   // PDF 업로드
   async function uploadPdfToBackend(file: File): Promise<string> {
@@ -39,7 +40,8 @@ export default function Home() {
   async function handleSaveWithAnnotations(
     file: File,
     droppedAnnotations: DroppedAnnotation[],
-    renderedWidth: number
+    renderedSizes: Record<number, { width: number; height: number }>
+
   ) {
     const existingPdfBytes = await file.arrayBuffer();
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -55,9 +57,11 @@ export default function Home() {
       const pageWidth = page.getWidth();
       const pageHeight = page.getHeight();
 
-      const renderedHeight = (renderedWidth * pageHeight) / pageWidth;
-      const scaledX = (annotation.x / renderedWidth) * pageWidth;
-      const scaledY = pageHeight - (annotation.y / renderedHeight) * pageHeight;
+      const rendered = renderedSizes[annotation.pageNumber];
+      if (!rendered) continue; // 안전 처리
+      
+      const scaledX = (annotation.x / rendered.width) * pageWidth;
+      const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
 
       page.drawText(annotation.text, {
         x: scaledX,
@@ -73,9 +77,11 @@ export default function Home() {
     saveAs(blob, "annotated.pdf");
   }
 
+
   return (
     <div className="flex flex-col h-screen">
-      <div className="p-4 flex gap-4 bg-white shadow z-10 items-center">
+      {/* ✅ 상단 고정된 헤더 */}
+      <div className="p-4 flex gap-4 bg-white shadow z-10 items-center sticky top-0">
         <input
           type="file"
           id="pdf-upload"
@@ -94,14 +100,14 @@ export default function Home() {
         >
           PDF 업로드
         </label>
-
+  
         <STTRecorder />
-
+  
         <button
           className="px-4 py-2 bg-blue-500 text-white rounded"
           onClick={() => {
             if (pdfFile) {
-              handleSaveWithAnnotations(pdfFile, dropped, containerWidth);
+              handleSaveWithAnnotations(pdfFile, dropped, renderedSizes);
             } else {
               alert("PDF 파일을 먼저 업로드하세요.");
             }
@@ -110,17 +116,24 @@ export default function Home() {
           PDF 다운로드
         </button>
       </div>
+  
+      {/* ✅ 하단 본문: PDF/주석 패널 나란히, 각각 독립 스크롤 */}
+      <div className="flex flex-1 h-0 gap-0">
+      <PDFViewer
+  dropped={dropped}
+  setDropped={setDropped}
+  file={pdfFile}
+  containerWidth={containerWidth}
+  setContainerWidth={setContainerWidth}
+  setRenderedSizes={setRenderedSizes}
 
-      <main className="flex flex-1" ref={captureRef}>
-        <PDFViewer
-          dropped={dropped}
-          setDropped={setDropped}
-          file={pdfFile}
-          containerWidth={containerWidth}
-          setContainerWidth={setContainerWidth}
-        />
-        <AnnotationPanel />
-      </main>
+/>
+  
+        {/* ✅ 주석 스크롤이 따로 움직이도록 */}
+  <div className="w-1/3 h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400">
+  <AnnotationPanel />
+</div>
+      </div>
     </div>
   );
-}
+}  

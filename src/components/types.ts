@@ -4,4 +4,7 @@ export interface DroppedAnnotation {
     x: number;
     y: number;
     pageNumber: number;
+    width?: number;
+    height?: number;
+    markdown?: string;
   }
