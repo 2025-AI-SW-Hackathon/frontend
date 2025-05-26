@@ -10,7 +10,7 @@ export default function STTRecorder() {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
+  
   const convertFloat32ToInt16 = (buffer: Float32Array) => {
     const l = buffer.length;
     const result = new Int16Array(l);
