@@ -10,8 +10,13 @@ export default function AnnotationPanel() {
   const [editValue, setEditValue] = useState("");
 
   const startEdit = (id: string, text: string) => {
+    try {
+      const parsed = JSON.parse(text);
+      setEditValue(parsed.refinedText || "");
+    } catch {
+      setEditValue(text); // fallback
+    }
     setEditingId(id);
-    setEditValue(text);
   };
 
   const finishEdit = () => {
@@ -33,9 +38,21 @@ export default function AnnotationPanel() {
     const dragged = annotations.find((a) => a.id === id);
     if (!dragged) return;
   
-    // 📌 isDragged: true 플래그 추가해서 PDF 쪽에서만 처리하게끔
-    e.dataTransfer.setData("text/plain", JSON.stringify({ ...dragged, isDragged: true }));
-    
+    // isDragged: true 플래그 추가해서 PDF 쪽에서만 처리하게끔
+  // 실제 DOM element의 크기 계산
+  const target = e.currentTarget as HTMLElement;
+  const width = target.offsetWidth;
+  const height = target.offsetHeight;
+
+  e.dataTransfer.setData(
+    "text/plain",
+    JSON.stringify({
+      ...dragged,
+      width,
+      height,
+      isDragged: true,
+    })
+  );    
     // ❌ 리스트에서 제거하지 않음!
   };
 
@@ -64,35 +81,48 @@ export default function AnnotationPanel() {
 >
 
 
-            {editingId === anno.id ? (
-              <input
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={finishEdit}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") finishEdit();
-                }}
-                autoFocus
-                className="w-full bg-white border p-1 text-sm rounded"
-              />
-            ) : (
-              <>
-                <div className="flex-1">
-                  {anno.text}
-                  {anno.markdown && (
-                    <div className="text-xs text-gray-600 mt-1">{anno.markdown}</div>
-                  )}
-                </div>
-                <div className="flex gap-2 ml-2 opacity-0 group-hover:opacity-100 transition">
-                  <button onClick={() => startEdit(anno.id, anno.text)}>
-                    <Pencil size={16} />
-                  </button>
-                  <button onClick={() => deleteAnnotation(anno.id)}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </>
-            )}
+{editingId === anno.id ? (
+  <textarea
+    value={editValue}
+    onChange={(e) => setEditValue(e.target.value)}
+    onBlur={finishEdit}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        finishEdit();
+      }
+    }}
+    rows={3} // 기본 줄 수
+    autoFocus
+    className="w-full bg-white border p-2 text-sm rounded resize-none"
+  />
+) : (
+  <>
+    <div className="flex-1 whitespace-pre-wrap">
+      {(() => {
+        try {
+          return JSON.parse(anno.text).refinedText;
+        } catch {
+          return anno.text;
+        }
+      })()}
+      {anno.markdown && (
+        <div className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
+          {anno.markdown}
+        </div>
+      )}
+    </div>
+    <div className="flex gap-2 ml-2 opacity-0 group-hover:opacity-100 transition">
+      <button onClick={() => startEdit(anno.id, anno.text)}>
+        <Pencil size={16} />
+      </button>
+      <button onClick={() => deleteAnnotation(anno.id)}>
+        <Trash2 size={16} />
+      </button>
+    </div>
+  </>
+)}
+
           </div>
         ))}
       </div>

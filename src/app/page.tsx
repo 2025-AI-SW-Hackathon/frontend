@@ -63,13 +63,47 @@ export default function Home() {
       const scaledX = (annotation.x / rendered.width) * pageWidth;
       const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
 
-      page.drawText(annotation.text, {
-        x: scaledX,
-        y: scaledY,
-        size: 10,
-        font: customFont,
-        color: rgb(1, 0.6, 0),
-      });
+      for (const annotation of droppedAnnotations) {
+        const page = pages[annotation.pageNumber - 1];
+        const pageWidth = page.getWidth();
+        const pageHeight = page.getHeight();
+        
+      
+        const rendered = renderedSizes[annotation.pageNumber];
+        if (!rendered) continue;
+      
+        const scaledX = (annotation.x / rendered.width) * pageWidth;
+        const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
+      
+        try {
+          const parsed = JSON.parse(annotation.text);
+          const refined: string = parsed.refinedText || "";
+          const lines: string[] =
+          parsed.lines ??
+          parsed.refinedText.split("\n"); // fallback
+          const lineHeight = 12; // px 단위
+          lines.forEach((line, i) => {
+            page.drawText(line, {
+              x: scaledX,
+              y: scaledY - i * lineHeight,
+              size: 10,
+              font: customFont,
+              color: rgb(1, 0.6, 0),
+              maxWidth: annotation.width,
+            });
+          });
+        } catch (e) {
+          // fallback: 원본 문자열 출력
+          page.drawText(annotation.text, {
+            x: scaledX,
+            y: scaledY,
+            size: 10,
+            font: customFont,
+            color: rgb(1, 0.6, 0),
+          });
+        }
+      }
+      
     }
 
     const pdfBytes = await pdfDoc.save();

@@ -35,6 +35,7 @@
     const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
 
 
     useEffect(() => {
@@ -63,21 +64,30 @@
         )
       );
     };
-  const handleConfirmEdit = (annoId: string) => {
+    const handleConfirmEdit = (annoId: string) => {
       const el = textareaRef.current;
-      if (el) {
-        updateAnnotation(annoId, {
-          text: editValue,
-          width: el.offsetWidth,
-          height: el.offsetHeight,
-        });
-      } else {
-        updateAnnotation(annoId, { text: editValue });
-      }
+      const refinedText = editValue;
+
+      const lines = el?.value
+      .split("\n")  // 사용자가 수동으로 줄바꿈한 경우 포함
+      .flatMap((line) =>
+        line.length > 0 ? line.match(/.{1,50}/g) ?? [line] : [""]
+      );
+  
+    
+      updateAnnotation(annoId, {
+        text: JSON.stringify({
+          refinedText,
+          lines, // ✅ 시각적 줄 상태도 저장
+        }),        width: el?.offsetWidth,
+        height: el?.offsetHeight,
+      });
+    
       setSelectedAnnotationId(null);
     };
+    
 
-    return (
+    return (  
       <div ref={containerRef} className="w-full h-screen overflow-y-auto bg-gray-100 p-4">
         {file ? (
           <Document
@@ -186,45 +196,47 @@
       name={`annotation-${anno.id}`}
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
-        onBlur={() => {
-          const element = textareaRef.current;
-          if (element) {
-            updateAnnotation(anno.id, {
-              text: editValue,
-              width: element.offsetWidth,
-              height: element.offsetHeight,
-            });
-          } else {
-            updateAnnotation(anno.id, { text: editValue });
-  }
-            setSelectedAnnotationId(null);
-                }}
+        onBlur={() => handleConfirmEdit(anno.id)}
         className="w-full h-full bg-yellow-200 text-sm p-2 rounded shadow whitespace-pre-line break-words resize"
         autoFocus
       />
     ) : (
-      <div className="relative group w-full h-full bg-yellow-200 p-2 rounded shadow whitespace-pre-line break-words">
+      <div className="relative group w-full h-full bg-yellow-200 text-sm p-2 rounded shadow whitespace-pre-line break-words">
       {isSelected ? (
         <textarea
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
-          onBlur={() => {
-            updateAnnotation(anno.id, { text: editValue });
-            setSelectedAnnotationId(null);
-          }}
+          onBlur={() => handleConfirmEdit(anno.id)}
+
           autoFocus
           className="bg-yellow-200 text-sm p-2 rounded shadow resize w-full min-w-[100px] min-h-[50px] whitespace-pre-wrap break-words"
         />
       ) : (
-        <>{anno.text}</>
-      )}
+<>
+  {(() => {
+    try {
+      return JSON.parse(anno.text).refinedText;
+    } catch {
+      return anno.text;
+    }
+  })()}
+</>      )}
 
       <button
         onClick={(e) => {
           e.stopPropagation();
           setSelectedAnnotationId(anno.id);
-          setEditValue(anno.text);
-        }}
+          try {
+            const parsed = JSON.parse(anno.text);
+            setEditValue(parsed.refinedText ?? "");
+          } catch {
+            setEditValue(() => {
+              try {
+                return JSON.parse(anno.text).refinedText;
+              } catch {
+                return anno.text.includes("refinedText") ? "" : anno.text;
+              }
+            });          }        }}
         onMouseDown={(e) => e.stopPropagation()}
         className="non-draggable absolute top-1 right-1 z-50 pointer-events-auto"
       >
