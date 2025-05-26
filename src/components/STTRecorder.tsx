@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAnnotation } from "./AnnotationContext"; // ✅ 추가
 
 export default function STTRecorder() {
+  const { addAnnotation } = useAnnotation(); // ✅ 주석 추가 기능 사용
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -39,7 +41,7 @@ export default function STTRecorder() {
         const source = audioContext.createMediaStreamSource(stream);
         sourceRef.current = source;
 
-        const processor = audioContext.createScriptProcessor(4096, 1, 1);  // 버퍼 크기, 입력 채널, 출력 채널
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
         processorRef.current = processor;
 
         source.connect(processor);
@@ -59,6 +61,15 @@ export default function STTRecorder() {
 
       ws.onmessage = (event) => {
         console.log("서버 응답:", event.data);
+
+        // ✅ 주석 추가 로직
+        const newText = event.data;
+        const newAnnotation = {
+          id: crypto.randomUUID(),
+          text: newText,
+          markdown: null, // 필요 시 후처리
+        };
+        addAnnotation(newAnnotation);
       };
 
       ws.onerror = (err) => {
@@ -93,7 +104,7 @@ export default function STTRecorder() {
 
   const stopRecording = () => {
     if (socket?.readyState === WebSocket.OPEN) {
-      socket.close(); // 서버에서도 STT 세션 종료됨
+      socket.close();
     } else {
       stopRecordingInternal();
       setSocket(null);
