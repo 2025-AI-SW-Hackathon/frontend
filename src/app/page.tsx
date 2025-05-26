@@ -17,7 +17,7 @@ export default function Home() {
   const [containerWidth, setContainerWidth] = useState<number>(600); // 임시 기본값
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [renderedSizes, setRenderedSizes] = useState<Record<number, { width: number; height: number }>>({});
-
+    
   // PDF 업로드
   async function uploadPdfToBackend(file: File): Promise<string> {
     const formData = new FormData();
@@ -100,9 +100,9 @@ export default function Home() {
         >
           PDF 업로드
         </label>
-  
+
         <STTRecorder />
-  
+
         <button
           className="px-4 py-2 bg-blue-500 text-white rounded"
           onClick={() => {
