@@ -19,10 +19,33 @@ const AnnotationContext = createContext<AnnotationContextType | null>(null);
 
 export function AnnotationProvider({ children }: { children: React.ReactNode }) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
-
   const addAnnotation = (a: Annotation) => {
+    try {
+      const parsed = JSON.parse(a.text);
+      const paragraphs: string[] = (parsed.refinedText ?? "")
+      .split(/\n\s*\n/)
+      .map((para: string) => para.trim())
+      .filter(Boolean);
+  
+      if (paragraphs.length > 1) {
+        setAnnotations((prev) => [
+          ...prev,
+          ...paragraphs.map((para, idx) => ({
+            id: `${a.id}-p${idx}`,
+            text: JSON.stringify({ refinedText: para }),
+            markdown: a.markdown ?? null,
+          })),
+        ]);
+        return;
+      }
+    } catch {
+      // JSON 파싱 실패 → 단일 주석으로 추가
+    }
+  
     setAnnotations((prev) => [...prev, a]);
   };
+  
+  
 
   const editAnnotation = (id: string, newText: string) => {
     setAnnotations((prev) =>

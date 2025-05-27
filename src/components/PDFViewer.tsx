@@ -36,6 +36,25 @@
     const [editValue, setEditValue] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!selectedAnnotationId || !el) return;
+  
+    // ✨ textarea가 실제 DOM에 렌더된 후 한 프레임 쉬고 계산
+    const resizeObserver = new ResizeObserver(() => {
+      const newHeight = el.scrollHeight;
+      const currentHeight = dropped.find((a) => a.id === selectedAnnotationId)?.height;
+  
+      if (Math.abs((currentHeight ?? 0) - newHeight) > 1) {
+        updateAnnotation(selectedAnnotationId, { height: newHeight });
+      }
+    });
+  
+    resizeObserver.observe(el);
+  
+    return () => resizeObserver.disconnect();
+  }, [selectedAnnotationId]); // ⭐ editValue가 아니라, edit모드 진입에만 반응
+  
 
 
     useEffect(() => {
@@ -68,12 +87,44 @@
       const el = textareaRef.current;
       const refinedText = editValue;
 
-      const lines = el?.value
-      .split("\n")  // 사용자가 수동으로 줄바꿈한 경우 포함
-      .flatMap((line) =>
-        line.length > 0 ? line.match(/.{1,50}/g) ?? [line] : [""]
-      );
-  
+      const lines = el?.value.split("\n").flatMap((line) => {
+        const temp = document.createElement("div");
+        temp.style.width = el.clientWidth + "px";
+        temp.style.font = window.getComputedStyle(el).font;
+        temp.style.lineHeight = window.getComputedStyle(el).lineHeight;
+        temp.style.whiteSpace = "pre-wrap";
+        temp.style.visibility = "hidden";
+        temp.style.position = "absolute";
+        temp.style.pointerEvents = "none";
+        temp.style.zIndex = "-1";
+        temp.textContent = ""; // 초기화
+      
+        // 줄 단위로 분리하려면 단어 기준 분할이 필요
+        const words = line.split(" ");
+        let currentLine = "";
+        let result: string[] = [];
+      
+        document.body.appendChild(temp);
+      
+        for (let word of words) {
+          const testLine = currentLine + (currentLine ? " " : "") + word;
+          temp.textContent = testLine;
+          if (temp.scrollWidth > el.clientWidth) {
+            result.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) result.push(currentLine);
+      
+        document.body.removeChild(temp);
+        return result;
+      });
+    
+      
+      console.log("✅ refinedText:", refinedText);
+      console.log("✅ lines 내용:", lines);
     
       updateAnnotation(annoId, {
         text: JSON.stringify({
@@ -172,13 +223,42 @@
     onDragStop={(e, d) => {
       updateAnnotation(anno.id, { x: d.x, y: d.y });
     }}
-    onResizeStop={(e, dir, ref, delta, position) => {
+
+    onResize={(e, dir, ref, delta, position) => {
+      const textarea = ref.querySelector("textarea");
+      const newHeight =
+        textarea && textarea.scrollHeight > 0 ? textarea.scrollHeight : ref.offsetHeight;
+    
       updateAnnotation(anno.id, {
         width: ref.offsetWidth,
-        height: ref.offsetHeight,
+        height: newHeight,
         x: position.x,
         y: position.y,
       });
+    }}
+
+    
+    onResizeStop={(e, dir, ref, delta, position) => {
+      const newWidth = ref.offsetWidth;
+      console.log("📐 New newWidth after resize:", newWidth);
+
+      // ✨ textarea 기준 높이 재계산
+      const textarea = ref.querySelector("textarea");
+      
+      const newHeight =
+        textarea && textarea.scrollHeight > 0 ? textarea.scrollHeight : ref.offsetHeight;
+        setTimeout(() => {
+          const newHeight =
+            textarea && textarea.scrollHeight > 0 ? textarea.scrollHeight : ref.offsetHeight;
+            console.log("📐 New height after resize:", newHeight);
+
+      updateAnnotation(anno.id, {
+        width: newWidth,
+        height: newHeight,
+        x: position.x,
+        y: position.y,
+      });
+    },0);
     }}
     bounds="parent"
     enableResizing={{
@@ -192,6 +272,7 @@
     {isSelected ? (
       <textarea
   ref={textareaRef}
+  
   id={`annotation-${anno.id}`}
       name={`annotation-${anno.id}`}
         value={editValue}

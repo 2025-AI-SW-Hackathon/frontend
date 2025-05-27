@@ -81,12 +81,15 @@ export default function Home() {
           const lines: string[] =
           parsed.lines ??
           parsed.refinedText.split("\n"); // fallback
+          if (lines.length === 1) {
+            lines.push(" ");
+          }
           const lineHeight = 12; // px 단위
           lines.forEach((line, i) => {
             page.drawText(line, {
               x: scaledX,
               y: scaledY - i * lineHeight,
-              size: 10,
+              size: 12,
               font: customFont,
               color: rgb(1, 0.6, 0),
               maxWidth: annotation.width,
@@ -97,7 +100,7 @@ export default function Home() {
           page.drawText(annotation.text, {
             x: scaledX,
             y: scaledY,
-            size: 10,
+            size: 12,
             font: customFont,
             color: rgb(1, 0.6, 0),
           });
