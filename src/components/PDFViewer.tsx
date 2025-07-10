@@ -123,13 +123,14 @@
       });
     
       
-      console.log("✅ refinedText:", refinedText);
-      console.log("✅ lines 내용:", lines);
+      console.log("refinedText:", refinedText);
+      console.log("lines 내용:", lines);
     
       updateAnnotation(annoId, {
         text: JSON.stringify({
           refinedText,
-          lines, // ✅ 시각적 줄 상태도 저장
+          lines, // 시각적 줄 상태도 저장
+          answerState: dropped.find((a) => a.id === annoId)?.answerState ?? 1, //유지
         }),        width: el?.offsetWidth,
         height: el?.offsetHeight,
       });
@@ -139,8 +140,11 @@
     
 
     return (  
-      <div ref={containerRef} className="w-full h-screen overflow-y-auto bg-gray-100 p-4">
-        {file ? (
+<div
+  ref={containerRef}
+  className="w-full h-screen overflow-y-auto bg-gray-100 flex justify-start"
+>
+          {file ? (
           <Document
             file={file}
             onLoadSuccess={({ numPages }) => setNumPages(numPages)}
@@ -151,7 +155,8 @@
                 <div
                   key={pageNumber}
                   id={`pdf-page-${pageNumber}`}
-                  className="relative mb-4"
+                  className="relative mb-4 mx-auto" // 중앙 정렬 + 여백 제거
+                  style={{ maxWidth: `${containerWidth}px` }} // PDF 크기에 맞춤
                   onDrop={(e) => {
                     e.preventDefault();
                     const data = e.dataTransfer.getData("text/plain");
@@ -170,6 +175,7 @@
                         width: parsed.width ?? 160,     // ✅ 수정된 값 유지
                         height: parsed.height ?? 60,    // ✅ 수정된 값 유지
                         pageNumber,
+                        answerState: parsed.answerState ?? 1, // ✅ 이 줄 추가!
                       },
                     ]);
 
@@ -234,6 +240,7 @@
         height: newHeight,
         x: position.x,
         y: position.y,
+        
       });
     }}
 
@@ -267,6 +274,15 @@
       right: true,
     }}
     className="absolute pointer-events-auto"
+    style={{
+      backgroundColor:
+      anno.answerState === 0
+        ? "rgba(255, 182, 193, 0.6)" // 연핑크
+        : anno.answerState === 2
+        ? "rgba(173, 216, 230, 0.6)" // 연하늘색 (LightBlue)
+        : "rgba(254, 240, 138, 0.8)", // 노랑      
+        border: "1px solid gray",
+    }}
     cancel='[data-non-draggable="true"]'
     disableDragging={!isSelected}>
     {isSelected ? (
@@ -278,20 +294,39 @@
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={() => handleConfirmEdit(anno.id)}
-        className="w-full h-full bg-yellow-200 text-sm p-2 rounded shadow whitespace-pre-line break-words resize"
+        className={`${
+          anno.answerState === 0
+            ? "bg-pink-200"
+            : anno.answerState === 2
+            ? "bg-blue-200"
+            : "bg-yellow-200"
+        } w-full h-full text-sm p-2 rounded shadow whitespace-pre-line break-words resize`}
         autoFocus
-      />
+      />  
     ) : (
-      <div className="relative group w-full h-full bg-yellow-200 text-sm p-2 rounded shadow whitespace-pre-line break-words">
-      {isSelected ? (
+<div
+  className={`relative group w-full h-full ${
+    anno.answerState === 0
+      ? "bg-pink-200"
+      : anno.answerState === 2
+      ? "bg-blue-200"
+      : "bg-yellow-200"
+  } text-sm p-2 rounded shadow whitespace-pre-line break-words`}
+>      {isSelected ? (
         <textarea
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={() => handleConfirmEdit(anno.id)}
 
           autoFocus
-          className="bg-yellow-200 text-sm p-2 rounded shadow resize w-full min-w-[100px] min-h-[50px] whitespace-pre-wrap break-words"
-        />
+          className={`${
+            anno.answerState === 0
+              ? "bg-pink-200"
+              : anno.answerState === 2
+              ? "bg-blue-200"
+              : "bg-yellow-200"
+          } text-sm p-2 rounded shadow resize w-full min-w-[100px] min-h-[50px] whitespace-pre-wrap break-words`}
+                  />
       ) : (
 <>
   {(() => {

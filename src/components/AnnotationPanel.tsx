@@ -5,7 +5,7 @@ import { useAnnotation } from "./AnnotationContext";
 import { Pencil, Trash2 } from "lucide-react";
 
 export default function AnnotationPanel() {
-  const { annotations, editAnnotation, setAnnotations } = useAnnotation(); // ✅ 수정됨
+  const { annotations, editAnnotation, setAnnotations } = useAnnotation(); 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -53,7 +53,7 @@ export default function AnnotationPanel() {
       isDragged: true,
     })
   );    
-    // ❌ 리스트에서 제거하지 않음!
+    // 리스트에서 제거하면 안됨.
   };
 
   useEffect(() => {
@@ -73,10 +73,16 @@ export default function AnnotationPanel() {
       <h2 className="text-lg font-bold mb-2">실시간 요약</h2>
       <div className="flex flex-col items-end	 gap-2">
         {annotations.map((anno) => (
+          
 <div
   key={anno.id}
-  className="w-full bg-blue-100 rounded max-w-full p-2 shadow text-sm group flex justify-between items-center box-border"
-  draggable
+  className={`w-full rounded max-w-full p-2 shadow text-sm group flex justify-between items-center box-border ${
+      anno.answerState === 0
+        ? "bg-pink-200"
+        : anno.answerState === 2
+        ? "bg-blue-200" 
+        : "bg-yellow-200"
+    }`}  draggable
   onDragStart={(e) => handleDragStart(e, anno.id)}
 >
 
