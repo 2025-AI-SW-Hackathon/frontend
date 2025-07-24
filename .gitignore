@@ -44,3 +44,8 @@ next-env.d.ts
 /public/video*
 /public/gif*
 .speaknote-front.zip
+
+/public/gif*
+/public/video*
+*.gif
+*.MP4
