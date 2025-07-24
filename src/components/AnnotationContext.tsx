@@ -1,3 +1,4 @@
+//annotationContext 파일임
 "use client";
 
 import React, { createContext, useContext, useState } from "react";
@@ -7,6 +8,7 @@ interface Annotation {
   text: string;
   markdown?: string | null;
   answerState?: number; //새로 적용
+  pageNumber?: number;
 }
 
 interface AnnotationContextType {
@@ -40,6 +42,7 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
           text: JSON.stringify({ refinedText: parsed.voice }),
           markdown: a.markdown ?? null,
           answerState: 2,
+          pageNumber: parsed.pageNumber,
         });
       }
 
@@ -51,6 +54,7 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
             text: JSON.stringify({ refinedText: para }),
             markdown: a.markdown ?? null,
             answerState: parsedAnswerState,
+            pageNumber: parsed.pageNumber,
           }))
         );
       }
