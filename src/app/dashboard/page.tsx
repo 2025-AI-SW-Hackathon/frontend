@@ -5,11 +5,23 @@ import Image from "next/image";
 import styles from './index.module.css';
 import { useRouter } from 'next/navigation'; // ✅ App Router용
 import Sidebar from "@/components/Sidebar"; // 실제 경로에 맞게 조정
+import { useAuth } from "@/components/AuthContext";
+import UserProfile from "@/components/UserProfile";
 
 const Component1: NextPage = () => {
   const router = useRouter(); // ⬅️ 사용 준비
+  const { user, signIn, signOut, isAuthenticated } = useAuth();
+  
   const goToHome = () => {
     router.push("/home");
+  };
+  
+  const handleAuthAction = () => {
+    if (isAuthenticated) {
+      signOut();
+    } else {
+      router.push("/auth/signin");
+    }
   };
   	return (
     		<div className={styles.div}>
@@ -141,6 +153,16 @@ const Component1: NextPage = () => {
           <div className={styles.button1} onClick={goToHome} style={{ cursor: "pointer" }}>
             <div className={styles.div50}>강의 시작하기</div>
           </div>
+          {isAuthenticated && user && (
+            <div style={{ marginLeft: "10px" }}>
+              <UserProfile />
+            </div>
+          )}
+          {!isAuthenticated && (
+            <div className={styles.button1} onClick={handleAuthAction} style={{ cursor: "pointer", marginLeft: "10px" }}>
+              <div className={styles.div50}>로그인</div>
+            </div>
+          )}
         </div>
             						</div>
           					</div>
