@@ -21,18 +21,24 @@ export const api = {
     const { auth } = await import('./auth');
     const accessToken = auth.getAccessToken();
     
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
 
-    // options?.headers가 있으면 추가
+    // options?.headers가 있으면 먼저 병합
     if (options?.headers) {
-      Object.assign(headers, options.headers);
+      Object.assign(headers, options.headers as Record<string, string>);
     }
 
-    // 인증 토큰이 있으면 헤더에 추가
+    // Authorization 헤더는 로그인 상태로만 설정, 게스트는 반드시 제거
+    delete (headers as Record<string, string>)['Authorization'];
+    delete (headers as Record<string, string>)['authorization'];
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    // FormData가 아닌 경우에만 기본 Content-Type 설정
+    const isFormData = typeof FormData !== 'undefined' && options?.body instanceof FormData;
+    if (!isFormData && !('Content-Type' in headers)) {
+      headers['Content-Type'] = 'application/json';
     }
     
     const response = await fetch(url, {

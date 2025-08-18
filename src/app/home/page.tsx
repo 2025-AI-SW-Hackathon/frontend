@@ -26,6 +26,16 @@ export default function Home() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/pdf/upload`, {
         method: "POST",
+        // 게스트/로그인 규칙: Authorization은 로그인 사용자일 때만 설정
+        headers: (() => {
+          const headers: Record<string, string> = {};
+          try {
+            const { auth } = require("@/lib/auth");
+            const token = auth.getAccessToken?.();
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+          } catch (_) {}
+          return headers;
+        })(),
         body: formData,
       });
       const text = await res.text();
