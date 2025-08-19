@@ -1,181 +1,251 @@
-'use client'; // 🚨 꼭 맨 위에 선언!
+'use client';
 
-import type { NextPage } from 'next';
-import Image from "next/image";
-import styles from './index.module.css';
-import { useRouter } from 'next/navigation'; // ✅ App Router용
-import Sidebar from "@/components/Sidebar"; // 실제 경로에 맞게 조정
-import { useAuth } from "@/components/AuthContext";
-import UserProfile from "@/components/UserProfile";
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthContext';
 
-const Component1: NextPage = () => {
-  const router = useRouter(); // ⬅️ 사용 준비
-  const { user, signIn, signOut, isAuthenticated } = useAuth();
-  
-  const goToHome = () => {
-    router.push("/home");
+export default function DashboardPage() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
   };
-  
-  const handleAuthAction = () => {
-    if (isAuthenticated) {
-      signOut();
-    } else {
-      router.push("/auth/signin");
-    }
+
+  const handleStartLecture = () => {
+    router.push('/home');
   };
-  	return (
-    		<div className={styles.div}>
-      			<div className={styles.body}>
-        				<div className={styles.div1}>
-          					<div className={styles.main}>
-            						<div className={styles.section}>
-              							<div className={styles.div2}>학습 통계</div>
-              							<div className={styles.div3}>
-                								<div className={styles.div4}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div6}>
-                      											<div className={styles.div7}>누적 수업 수</div>
-                      											<b className={styles.b}>24</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/1.png" />
-                  									</div>
-                								</div>
-                								<div className={styles.div8}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div6}>
-                      											<div className={styles.div7}>총 생성 주석</div>
-                      											<b className={styles.b1}>1,247</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/2.png" />
-                  									</div>
-                								</div>
-                								<div className={styles.div12}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div6}>
-                      											<div className={styles.div7}>이번 주 활동</div>
-                      											<b className={styles.b2}>8시간</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/3.png" />
-                  									</div>
-                								</div>
-                								<div className={styles.div16}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div18}>
-                      											<div className={styles.div19}>평균 주석/강의</div>
-                      											<b className={styles.b3}>52</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/4.png" />
-                  									</div>
-                								</div>
-              							</div>
-            						</div>
-            						<div className={styles.section1}>
-              							<div className={styles.div20}>최근 강의 기록</div>
-              							<div className={styles.div21}>
-                								<div className={styles.div22}>
-                  									<div className={styles.div23}>
-                    										<div className={styles.div24}>
-                      											<div className={styles.div25}>
-                        												<Image className={styles.divChild} width={40} height={40} sizes="100vw" alt="" src="/파일.svg" />
-                        												<div className={styles.div26}>
-                          													<div className={styles.pdf}>데이터베이스_시스템_3장.pdf</div>
-                          													<div className={styles.div27}>생성 주석: 47개 • 2024년 1월 15일</div>
-                        												</div>
-                      											</div>
-                      											<Image className={styles.buttonIcon} width={10} height={24} sizes="100vw" alt="" src="button.svg" />
-                    										</div>
-                    										<div className={styles.div28}>
-                      											<div className={styles.div29}>
-                        												<Image className={styles.divChild} width={40} height={40} sizes="100vw" alt="" src="/파일.svg" />
-                        												<div className={styles.div30}>
-                          													<div className={styles.pdf1}>운영체제_프로세스관리.pdf</div>
-                          													<div className={styles.div27}>생성 주석: 63개 • 2024년 1월 12일</div>
-                        												</div>
-                      											</div>
-                      											<Image className={styles.buttonIcon} width={10} height={24} sizes="100vw" alt="" src="button.svg" />
-                    										</div>
-                    										<div className={styles.div32}>
-                      											<div className={styles.div33}>
-                        												<Image className={styles.divIcon4} width={40} height={40} sizes="100vw" alt="" src="/파일.svg" />
-                        												<div className={styles.div34}>
-                          													<div className={styles.pdf2}>알고리즘_정렬_알고리즘.pdf</div>
-                          													<div className={styles.div35}>생성 주석: 38개 • 2024년 1월 10일</div>
-                        												</div>
-                      											</div>
-                      											<Image className={styles.buttonIcon} width={10} height={24} sizes="100vw" alt="" src="button.svg" />
-                    										</div>
-                  									</div>
-                								</div>
-              							</div>
-            						</div>
-            						<div className={styles.div36}>
-              							<div className={styles.section2}>
-                								<div className={styles.h3}>
-                  									<div className={styles.ai}>AI 서비스 안내</div>
-                								</div>
-                								<div className={styles.div37}>
-                  									<div className={styles.divParent}>
-                    										<div className={styles.div38}>
-                      											<div className={styles.iconCircle}>
-                        											<Image src="/mic.svg" alt="마이크" width={10} height={13} />
-                      											</div>
-                      											<div className={styles.div39}>실시간 음성 인식으로 강의 내용을 자동 분석합니다</div>
-                    										</div>
-                    										<div className={styles.div40}>
-                      											<div className={styles.iconCircle}>
-                        											<Image src="/papers.svg" alt="문서" width={10} height={13} />
-                      											</div>
-                      											<div className={styles.div41}>강의자료 기반 맞춤형 주석을 생성합니다</div>
-                    										</div>
-                    										<div className={styles.div42}>
-                      											<div className={styles.iconCircle}>
-                        											<Image src="/drag.svg" alt="드래그" width={12} height={13} />
-                      											</div>
-                      											<div className={styles.div43}>드래그앤드롭으로 주석 위치를 자유롭게 조정하세요</div>
-                    										</div>
-                  									</div>
-                								</div>
-              							</div>
-              							<div className={styles.section3}>
-                								<div className={styles.h3}>
-                  									<div className={styles.div44}>피드백</div>
-                								</div>
-                								<div className={styles.textarea}>
-                  									<div className={styles.div45}>서비스 개선을 위한 의견을 남겨주세요...</div>
-                								</div>
-                								<div className={styles.button}>
-                  									<div className={styles.div46}>피드백 보내기</div>
-                								</div>
-              							</div>
-            						</div>
-          					</div>
-          					<div className={styles.header}>
-            						<div className={styles.div47}>
-              							<div className={styles.div48}>
-                								<b className={styles.speakNote}>Speak Note</b>
-              							</div>
-              							<div className={styles.div49} />
-                                          <div className={styles.buttonWrapper}>
-          <div className={styles.button1} onClick={goToHome} style={{ cursor: "pointer" }}>
-            <div className={styles.div50}>강의 시작하기</div>
+
+  return (
+    <div className="min-h-screen bg-[#f5f7ff] relative overflow-x-hidden">
+      {/* 배경 데이터 시각화 */}
+      <div 
+        className="fixed inset-0 z-[-1] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='1200' height='800' viewBox='0 0 1200 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='gradientBg' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' style='stop-color:%23f8faff;stop-opacity:0.1'/%3E%3Cstop offset='30%25' style='stop-color:%232563eb;stop-opacity:0.005'/%3E%3Cstop offset='70%25' style='stop-color:%232563eb;stop-opacity:0.01'/%3E%3Cstop offset='100%25' style='stop-color:%23ffffff;stop-opacity:0.05'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0,300 Q200,200 400,250 Q600,320 800,220 Q1000,150 1200,280 L1200,800 L0,800 Z' fill='url(%23gradientBg)'/%3E%3Cpath d='M0,350 Q150,250 300,300 Q450,380 600,280 Q750,180 900,320 Q1050,420 1200,250' fill='none' stroke='%232563eb' stroke-width='1' opacity='0.03'/%3E%3Cpath d='M0,400 Q200,300 400,380 Q600,450 800,350 Q1000,250 1200,380' fill='none' stroke='%232563eb' stroke-width='0.8' opacity='0.02'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          backgroundSize: 'cover'
+        }}
+      />
+
+      <div className="flex min-h-screen">
+        {/* 사이드바 */}
+        <aside className="w-70 bg-white border-r border-[#e8ecf3] shadow-[4px_0_20px_rgba(0,0,0,0.04)] flex-shrink-0 relative">
+          <div className="p-8 pb-6 border-b border-[#f5f7fa] bg-[#4285f4] text-white">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center text-white font-bold text-base backdrop-blur-sm border border-white/10">
+                S
+              </div>
+              <div className="text-2xl font-bold text-shadow">Speak Note</div>
+            </div>
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/15 backdrop-blur-sm border border-white/10">
+              <div className="w-10 h-10 bg-white/90 text-[#4285f4] rounded-full flex items-center justify-center font-bold text-base shadow-lg">
+                A
+              </div>
+              <div>
+                <h4 className="text-base font-semibold mb-1">사용자</h4>
+                <p className="text-sm opacity-80">대시보드</p>
+              </div>
+            </div>
           </div>
-          {isAuthenticated && user && (
-            <div style={{ marginLeft: "10px" }}>
-              <UserProfile />
+          
+          <nav className="p-6 flex-1">
+            <div className="space-y-2">
+              <div className="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-300 bg-[#4285f4] text-white shadow-[0_4px_15px_rgba(66,133,244,0.3)]">
+                <div className="w-6 h-6 flex items-center justify-center text-lg">📊</div>
+                <span className="font-medium">대시보드</span>
+              </div>
+              <div className="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-300 hover:text-[#4285f4] hover:bg-[#f0f4ff] hover:translate-x-1 font-medium">
+                <div className="w-6 h-6 flex items-center justify-center text-lg">📚</div>
+                <span>강의 기록</span>
+              </div>
+              <div className="flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-300 hover:text-[#4285f4] hover:bg-[#f0f4ff] hover:translate-x-1 font-medium">
+                <div className="w-6 h-6 flex items-center justify-center text-lg">⚙️</div>
+                <span>설정</span>
+              </div>
             </div>
-          )}
-          {!isAuthenticated && (
-            <div className={styles.button1} onClick={handleAuthAction} style={{ cursor: "pointer", marginLeft: "10px" }}>
-              <div className={styles.div50}>로그인</div>
+          </nav>
+          
+          <div className="p-6 border-t border-[#f5f7fa] bg-[#fbfcfd]">
+            <div className="space-y-2">
+              <button 
+                onClick={handleSignOut}
+                className="w-full p-3 bg-[#f8f9fa] text-gray-600 rounded-lg font-semibold transition-all duration-200 hover:bg-[#e8ecf3] hover:text-gray-800 text-sm border border-[#e8ecf3]"
+              >
+                로그아웃
+              </button>
             </div>
-          )}
-        </div>
-            						</div>
-          					</div>
-                              <Sidebar />
-        				</div>
-      			</div>
-    		</div>);
-};
+          </div>
+        </aside>
 
-export default Component1;
+        {/* 메인 컨텐츠 */}
+        <main className="flex-1 bg-transparent">
+          {/* 상단 네비게이션 */}
+          <nav className="bg-white/95 backdrop-blur-xl border-b border-[rgba(232,236,243,0.8)] p-5 px-10 flex justify-between items-center sticky top-0 z-50">
+            <div className="flex items-center gap-5">
+              <h1 className="text-3xl font-extrabold text-[#4285f4]">
+                대시보드
+              </h1>
+              <div className="flex items-center gap-2 text-sm text-gray-600 font-medium">
+                <span>홈</span>
+                <span>/</span>
+                <span className="text-[#4285f4] font-semibold">대시보드</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={handleStartLecture}
+                className="bg-[#4285f4] text-white border-none rounded-xl px-6 py-3 text-sm font-semibold cursor-pointer transition-all duration-300 shadow-[0_4px_15px_rgba(66,133,244,0.3)] hover:-translate-y-1 hover:shadow-[0_6px_25px_rgba(66,133,244,0.4)] hover:bg-[#3367d6]"
+              >
+                강의 시작하기
+              </button>
+            </div>
+          </nav>
+
+          {/* 컨텐츠 영역 */}
+          <div className="p-10 max-w-[1400px] mx-auto">
+            {/* 학습 통계 */}
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mb-6 text-[#1a1a1a] relative">
+                학습 통계
+                <div className="absolute bottom-0 left-0 w-15 h-1 bg-[#4285f4] rounded"></div>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] relative border border-[rgba(232,236,243,0.6)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-[#4285f4]"></div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 bg-[#f0f4ff] rounded-xl flex items-center justify-center text-[#4285f4] text-xl">📈</div>
+                  </div>
+                  <div className="text-4xl font-extrabold mb-2 text-[#1a1a1a]">24</div>
+                  <div className="text-gray-600 text-sm font-medium mb-3">누적 총신 수</div>
+                  <div className="text-[#4285f4] text-xs font-semibold px-3 py-1 bg-[rgba(66,133,244,0.1)] rounded-full inline-block">+12% 지난 주 대비</div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] relative border border-[rgba(232,236,243,0.6)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-[#4285f4]"></div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 bg-[#f0f4ff] rounded-xl flex items-center justify-center text-[#4285f4] text-xl">🎯</div>
+                  </div>
+                  <div className="text-4xl font-extrabold mb-2 text-[#1a1a1a]">1,247</div>
+                  <div className="text-gray-600 text-sm font-medium mb-3">총 성취 주석</div>
+                  <div className="text-[#4285f4] text-xs font-semibold px-3 py-1 bg-[rgba(66,133,244,0.1)] rounded-full inline-block">+8% 지난 주 대비</div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] relative border border-[rgba(232,236,243,0.6)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-[#4285f4]"></div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 bg-[#f0f4ff] rounded-xl flex items-center justify-center text-[#4285f4] text-xl">⏰</div>
+                  </div>
+                  <div className="text-4xl font-extrabold mb-2 text-[#1a1a1a]">8시간</div>
+                  <div className="text-gray-600 text-sm font-medium mb-3">이번 주 학습</div>
+                  <div className="text-[#4285f4] text-xs font-semibold px-3 py-1 bg-[rgba(66,133,244,0.1)] rounded-full inline-block">목표 달성!</div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] relative border border-[rgba(232,236,243,0.6)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-[#4285f4]"></div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 bg-[#f0f4ff] rounded-xl flex items-center justify-center text-[#4285f4] text-xl">📋</div>
+                  </div>
+                  <div className="text-4xl font-extrabold mb-2 text-[#1a1a1a]">52</div>
+                  <div className="text-gray-600 text-sm font-medium mb-3">평균 주석/강의</div>
+                  <div className="text-[#4285f4] text-xs font-semibold px-3 py-1 bg-[rgba(66,133,244,0.1)] rounded-full inline-block">+15% 향상</div>
+                </div>
+              </div>
+            </section>
+
+            {/* 최근 강의 기록 */}
+            <section className="mb-12">
+              <h2 className="text-2xl font-bold mb-6 text-[#1a1a1a] relative">
+                최근 강의 기록
+                <div className="absolute bottom-0 left-0 w-15 h-1 bg-[#4285f4] rounded"></div>
+              </h2>
+              <div className="relative bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-[rgba(232,236,243,0.6)]">
+                <button className="absolute top-1/2 -left-6 transform -translate-y-1/2 bg-white border-2 border-[#f0f4ff] rounded-full w-12 h-12 flex items-center justify-center cursor-pointer text-[#4285f4] shadow-[0_4px_20px_rgba(66,133,244,0.2)] z-10 transition-all duration-300 hover:bg-[#4285f4] hover:text-white hover:scale-110 text-xl font-bold">
+                  ‹
+                </button>
+                <button className="absolute top-1/2 -right-6 transform -translate-y-1/2 bg-white border-2 border-[#f0f4ff] rounded-full w-12 h-12 flex items-center justify-center cursor-pointer text-[#4285f4] shadow-[0_4px_20px_rgba(66,133,244,0.2)] z-10 transition-all duration-300 hover:bg-[#4285f4] hover:text-white hover:scale-110 text-xl font-bold">
+                  ›
+                </button>
+                
+                <div className="flex gap-6 overflow-x-auto py-2 scroll-smooth">
+                  <div className="bg-[#f8fafe] rounded-2xl p-6 min-w-80 flex items-center gap-5 border-2 border-[rgba(66,133,244,0.1)] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(66,133,244,0.15)] hover:border-[rgba(66,133,244,0.3)]">
+                    <div className="w-14 h-14 bg-[#dc4c3e] rounded-xl flex items-center justify-center text-white font-bold text-base shadow-[0_4px_16px_rgba(220,76,62,0.3)]">
+                      PDF
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 text-[#1a1a1a]">데이터베이스_시스템_3장.pdf</h3>
+                      <div className="text-gray-600 text-sm font-medium">생성 주석: 47개 • 2024년 1월 15일</div>
+                    </div>
+                  </div>
+                  <div className="bg-[#f8fafe] rounded-2xl p-6 min-w-80 flex items-center gap-5 border-2 border-[rgba(66,133,244,0.1)] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(66,133,244,0.15)] hover:border-[rgba(66,133,244,0.3)]">
+                    <div className="w-14 h-14 bg-[#dc4c3e] rounded-xl flex items-center justify-center text-white font-bold text-base shadow-[0_4px_16px_rgba(220,76,62,0.3)]">
+                      PDF
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 text-[#1a1a1a]">운영체제_프로세스관리.pdf</h3>
+                      <div className="text-gray-600 text-sm font-medium">생성 주석: 63개 • 2024년 1월 12일</div>
+                    </div>
+                  </div>
+                  <div className="bg-[#f8fafe] rounded-2xl p-6 min-w-80 flex items-center gap-5 border-2 border-[rgba(66,133,244,0.1)] transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(66,133,244,0.15)] hover:border-[rgba(66,133,244,0.3)]">
+                    <div className="w-14 h-14 bg-[#dc4c3e] rounded-xl flex items-center justify-center text-white font-bold text-base shadow-[0_4px_16px_rgba(220,76,62,0.3)]">
+                      PDF
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2 text-[#1a1a1a]">알고리즘_정렬_알고리즘.pdf</h3>
+                      <div className="text-gray-600 text-sm font-medium">생성 주석: 38개 • 2024년 1월 10일</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-center gap-3 mt-8 mb-4">
+                <div className="w-3 h-3 rounded-full bg-[#4285f4] scale-125"></div>
+                <div className="w-3 h-3 rounded-full bg-[#e8ecf3] cursor-pointer transition-all duration-300 hover:bg-[#4285f4] hover:opacity-70"></div>
+                <div className="w-3 h-3 rounded-full bg-[#e8ecf3] cursor-pointer transition-all duration-300 hover:bg-[#4285f4] hover:opacity-70"></div>
+              </div>
+            </section>
+
+            {/* 하단 그리드 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-[rgba(232,236,243,0.6)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)]">
+                <h2 className="text-2xl font-bold mb-6 text-[#1a1a1a] relative">
+                  AI 서비스 안내
+                  <div className="absolute bottom-0 left-0 w-15 h-1 bg-[#4285f4] rounded"></div>
+                </h2>
+                <div className="space-y-5">
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafe] transition-all duration-200 hover:bg-[#f0f4ff] hover:translate-x-1">
+                    <div className="w-10 h-10 bg-[#4285f4] rounded-xl flex items-center justify-center text-white text-base font-semibold flex-shrink-0">ℹ️</div>
+                    <div>실시간 음성 인식으로 강의 내용을 자동 분석합니다</div>
+                  </div>
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafe] transition-all duration-200 hover:bg-[#f0f4ff] hover:translate-x-1">
+                    <div className="w-10 h-10 bg-[#4285f4] rounded-xl flex items-center justify-center text-white text-base font-semibold flex-shrink-0">💡</div>
+                    <div>강의자료 기반 맞춤형 주석을 생성합니다</div>
+                  </div>
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-[#f8fafe] transition-all duration-200 hover:bg-[#f0f4ff] hover:translate-x-1">
+                    <div className="w-10 h-10 bg-[#4285f4] rounded-xl flex items-center justify-center text-white text-base font-semibold flex-shrink-0">📈</div>
+                    <div>드래그앤드롭으로 주석 위치를 자유롭게 조정하세요</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-[rgba(232,236,243,0.6)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)]">
+                <h2 className="text-2xl font-bold mb-6 text-[#1a1a1a] relative">
+                  피드백
+                  <div className="absolute bottom-0 left-0 w-15 h-1 bg-[#4285f4] rounded"></div>
+                </h2>
+                <textarea 
+                  className="w-full border-2 border-[#f0f4ff] rounded-xl p-4 text-sm mb-4 resize-none min-h-24 transition-all duration-300 focus:border-[#4285f4] focus:outline-none focus:ring-4 focus:ring-[rgba(66,133,244,0.1)] font-inherit"
+                  placeholder="서비스 개선을 위한 의견을 남겨주세요..."
+                ></textarea>
+                <button className="bg-[#4285f4] text-white border-none rounded-lg px-6 py-3 text-sm font-semibold cursor-pointer transition-all duration-300 shadow-[0_4px_15px_rgba(66,133,244,0.3)] hover:-translate-y-1 hover:shadow-[0_6px_25px_rgba(66,133,244,0.4)] hover:bg-[#3367d6]">
+                  피드백 보내기
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
