@@ -10,7 +10,7 @@
 }
 .div7 {
     position: absolute;
-    top: -1.2px;
+    top: 0px;
     left: 0px;
     line-height: 20px;
     display: inline-block;
@@ -19,7 +19,7 @@
 }
 .b {
     position: absolute;
-    top: 15.56px;
+    top: 25px;
     left: 0px;
     font-size: 24px;
     line-height: 32px;
@@ -49,11 +49,11 @@
     top: 25px;
     left: 25px;
     background-color: rgba(0, 0, 0, 0);
-    width: 240px;
+    width: calc(100% - 50px);
     height: 52px;
 }
 .div4 {
-    position: absolute;
+    position: relative;
     top: 0px;
     left: 0px;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
@@ -61,12 +61,12 @@
     background-color: #fff;
     border: 1px solid #fff;
     box-sizing: border-box;
-    width: 290px;
+    width: 100%;
     height: 102px;
 }
 .b1 {
     position: absolute;
-    top: 15.56px;
+    top: 25px;
     left: 0px;
     font-size: 24px;
     line-height: 32px;
@@ -76,20 +76,20 @@
     height: 32px;
 }
 .div8 {
-    position: absolute;
+    position: relative;
     top: 0px;
-    left: 314px;
+    left: 0px;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
     border-radius: 12px;
     background-color: #fff;
     border: 1px solid #fff;
     box-sizing: border-box;
-    width: 290px;
+    width: 100%;
     height: 102px;
 }
 .b2 {
     position: absolute;
-    top: 14.92px;
+    top: 25px;
     left: 0px;
     font-size: 24px;
     line-height: 32px;
@@ -99,15 +99,15 @@
     height: 32px;
 }
 .div12 {
-    position: absolute;
+    position: relative;
     top: 0px;
-    left: 628px;
+    left: 0px;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
     border-radius: 12px;
     background-color: #fff;
     border: 1px solid #fff;
     box-sizing: border-box;
-    width: 290px;
+    width: 100%;
     height: 102px;
 }
 .div19 {
@@ -121,7 +121,7 @@
 }
 .b3 {
     position: absolute;
-    top: 15.56px;
+    top: 25px;
     left: 0px;
     font-size: 24px;
     line-height: 32px;
@@ -139,15 +139,15 @@
     height: 52px;
 }
 .div16 {
-    position: absolute;
+    position: relative;
     top: 0px;
-    left: 942px;
+    left: 0px;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
     border-radius: 12px;
     background-color: #fff;
     border: 1px solid #fff;
     box-sizing: border-box;
-    width: 290px;
+    width: 100%;
     height: 102px;
 }
 .div3 {
@@ -155,17 +155,51 @@
     top: 52px;
     left: 0px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1600px;
+    width: 100%;
     height: 102px;
     font-size: 14px;
     color: #6b7280;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.div4, .div8, .div12, .div16 {
+    position: relative;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    background-color: #fff;
+    border: 1px solid #fff;
+    box-sizing: border-box;
+    width: 100%;
+    height: 102px;
+}
+
+.div4 {
+    top: 0px;
+    left: 0px;
+}
+
+.div8 {
+    top: 0px;
+    left: 0px;
+}
+
+.div12 {
+    top: 0px;
+    left: 0px;
+}
+
+.div16 {
+    top: 0px;
+    left: 0px;
 }
 .section {
     position: absolute;
     top: 32px;
     left: 24px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1232px;
+    width: calc(100% - 48px);
     height: 154px;
 }
 .div20 {
@@ -192,7 +226,7 @@
     line-height: 24px;
     font-weight: 500;
     display: inline-block;
-    width: 202px;
+    width: calc(100% - 56px);
     height: 24px;
 }
 .div27 {
@@ -203,7 +237,7 @@
     line-height: 20px;
     color: #6b7280;
     display: inline-block;
-    width: 212px;
+    width: calc(100% - 56px);
     height: 20px;
 }
 .div26 {
@@ -211,7 +245,7 @@
     top: 0px;
     left: 56px;
     background-color: rgba(0, 0, 0, 0);
-    width: 218.9px;
+    width: calc(100% - 56px);
     height: 44px;
 }
 .div25 {
@@ -219,13 +253,13 @@
     top: 17px;
     left: 17px;
     background-color: rgba(0, 0, 0, 0);
-    width: 274.9px;
+    width: calc(100% - 34px);
     height: 44px;
 }
 .buttonIcon {
     position: absolute;
     top: 27px;
-    left: 1155px;
+    right: 17px;
     width: 10px;
     height: 24px;
 }
@@ -237,7 +271,7 @@
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid #d4d4d4;
     box-sizing: border-box;
-    width: 1182px;
+    width: 100%;
     height: 78px;
 }
 .pdf1 {
@@ -247,7 +281,7 @@
     line-height: 24px;
     font-weight: 500;
     display: inline-block;
-    width: 185px;
+    width: calc(100% - 56px);
     height: 24px;
 }
 .div30 {
@@ -255,7 +289,7 @@
     top: 0px;
     left: 56px;
     background-color: rgba(0, 0, 0, 0);
-    width: 219.5px;
+    width: calc(100% - 56px);
     height: 44px;
 }
 .div29 {
@@ -263,7 +297,7 @@
     top: 17px;
     left: 17px;
     background-color: rgba(0, 0, 0, 0);
-    width: 275.5px;
+    width: calc(100% - 34px);
     height: 44px;
 }
 .div28 {
@@ -274,7 +308,7 @@
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid #d4d4d4;
     box-sizing: border-box;
-    width: 1182px;
+    width: 100%;
     height: 78px;
 }
 .divIcon4 {
@@ -292,7 +326,7 @@
     line-height: 24px;
     font-weight: 500;
     display: inline-block;
-    width: 193px;
+    width: calc(100% - 56px);
     height: 24px;
 }
 .div35 {
@@ -303,7 +337,7 @@
     line-height: 20px;
     color: #6b7280;
     display: inline-block;
-    width: 213px;
+    width: calc(100% - 56px);
     height: 20px;
 }
 .div34 {
@@ -311,7 +345,7 @@
     top: 0px;
     left: 56px;
     background-color: rgba(0, 0, 0, 0);
-    width: 219.8px;
+    width: calc(100% - 56px);
     height: 44px;
 }
 .div33 {
@@ -319,7 +353,7 @@
     top: 17px;
     left: 17px;
     background-color: rgba(0, 0, 0, 0);
-    width: 275.8px;
+    width: calc(100% - 34px);
     height: 44px;
 }
 .div32 {
@@ -330,7 +364,7 @@
     background-color: rgba(0, 0, 0, 0);
     border: 1px solid #d4d4d4;
     box-sizing: border-box;
-    width: 1182px;
+    width: 100%;
     height: 78px;
 }
 .div23 {
@@ -338,7 +372,7 @@
     top: 24px;
     left: 24px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1182px;
+    width: calc(100% - 48px);
     height: 266px;
 }
 .div22 {
@@ -346,7 +380,7 @@
     top: 1px;
     left: 1px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1230px;
+    width: calc(100% - 2px);
     height: 314px;
 }
 .div21 {
@@ -358,7 +392,7 @@
     background-color: #fff;
     border: 1px solid #d4d4d4;
     box-sizing: border-box;
-    width: 1232px;
+    width: 100%;
     height: 316px;
     font-size: 16px;
 }
@@ -367,7 +401,7 @@
     top: 218px;
     left: 24px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1232px;
+    width: calc(100% - 48px);
     height: 368px;
 }
 .ai {
@@ -394,7 +428,7 @@
     height: 24px;
 }
 .div39 {
-    width: 295px;
+    width: 288px;
     position: relative;
     line-height: 20px;
     display: inline-block;
@@ -407,11 +441,11 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: 0px;
+    justify-content: flex-start;
+    gap: 12px;
 }
 .div41 {
-    width: 235px;
+    width: 240px;
     position: relative;
     line-height: 20px;
     display: inline-block;
@@ -419,16 +453,16 @@
     flex-shrink: 0;
 }
 .div40 {
-    width: 274px;
+    width: 100%;
     background-color: rgba(0, 0, 0, 0);
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: 0px;
+    justify-content: flex-start;
+    gap: 12px;
 }
 .div43 {
-    width: 300px;
+    width: 288px;
     position: relative;
     line-height: 20px;
     display: inline-block;
@@ -551,14 +585,17 @@
     width: 1232px;
     height: 244px;
     font-size: 18px;
+    display: flex;
+    gap: 32px;
 }
 .main {
     position: absolute;
     top: 73px;
     left: 80px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1360px;
-    height: 989px;
+    width: calc(100% - 160px);
+    height: calc(100vh - 73px);
+    overflow-y: auto;
 }
 .speakNote {
     position: absolute;
@@ -604,22 +641,23 @@
 .buttonWrapper {
     position: absolute;
     top: 16px;
-    left: 1169px;
-    width: 148.3px;
+    right: 29px;
+    width: auto;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     text-align: center;
     font-size: 16px;
     color: #fff;
+    gap: 10px;
 }
 .div47 {
     position: absolute;
     top: 0px;
     left: 80px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1360px;
+    width: calc(100% - 80px);
     height: 72px;
 }
 .header {
@@ -630,7 +668,7 @@
     background-color: #fff;
     border-bottom: 1px solid #a8c7fa;
     box-sizing: border-box;
-    width: 1600px;
+    width: 100%;
     height: 73px;
 }
 .frame {
@@ -723,7 +761,7 @@
     left: 10px;
     background-color: rgba(0, 0, 0, 0);
     width: 60px;
-    height: 1053px;
+    height: 100%;
 }
 .button2 {
     position: absolute;
@@ -735,7 +773,7 @@
 }
 .div56 {
     position: absolute;
-    top: 1366px;
+    bottom: 16px;
     left: 16px;
     background-color: rgba(0, 0, 0, 0);
     width: 48px;
@@ -748,7 +786,7 @@
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 4px 6px rgba(0, 0, 0, 0.1);
     background-color: #fff;
     width: 80px;
-    height: 1062px;
+    height: 100%;
     font-size: 12px;
     color: #9ca3af;
 }
@@ -757,14 +795,14 @@
     top: 0px;
     left: 0px;
     background-color: rgba(0, 0, 0, 0);
-    width: 1600px;
-    height: 1162px;
+    width: 100%;
+    height: 100vh;
 }
 .body {
-    width: 1600px;
+    width: 100%;
     position: relative;
     background-color: #f9fafb;
-    height: 1062px;
+    height: 100vh;
 }
 .div {
     position: relative;
@@ -773,6 +811,7 @@
     border: 2px solid #ced4da;
     box-sizing: border-box;
     width: 100%;
+    height: 100vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -782,5 +821,56 @@
     font-size: 20px;
     color: #1f2937;
     font-family: Inter;
+}
+
+/* 반응형 미디어 쿼리 추가 */
+@media (max-width: 1366px) {
+    .div3 {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .div36 {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .main {
+        left: 60px;
+        width: calc(100% - 120px);
+    }
+    
+    .header {
+        left: 60px;
+        width: calc(100% - 60px);
+    }
+    
+    .div51 {
+        width: 60px;
+    }
+    
+    .div52 {
+        left: 5px;
+        width: 50px;
+    }
+    
+    .div3 {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+}
+
+/* AI 서비스 안내 아이콘 스타일 */
+.iconCircle {
+    width: 24px;
+    height: 24px;
+    background-color: #a8c7fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 

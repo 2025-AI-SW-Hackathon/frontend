@@ -116,15 +116,21 @@ const Component1: NextPage = () => {
                 								<div className={styles.div37}>
                   									<div className={styles.divParent}>
                     										<div className={styles.div38}>
-                      											<Image className={styles.divIcon5} width={24} height={24} sizes="100vw" alt="" src="/7.png" />
+                      											<div className={styles.iconCircle}>
+                        											<Image src="/mic.svg" alt="마이크" width={10} height={13} />
+                      											</div>
                       											<div className={styles.div39}>실시간 음성 인식으로 강의 내용을 자동 분석합니다</div>
                     										</div>
                     										<div className={styles.div40}>
-                      											<Image className={styles.divIcon5} width={24} height={24} sizes="100vw" alt="" src="/8.png" />
+                      											<div className={styles.iconCircle}>
+                        											<Image src="/papers.svg" alt="문서" width={10} height={13} />
+                      											</div>
                       											<div className={styles.div41}>강의자료 기반 맞춤형 주석을 생성합니다</div>
                     										</div>
                     										<div className={styles.div42}>
-                      											<Image className={styles.divIcon5} width={24} height={24} sizes="100vw" alt="" src="/9.png" />
+                      											<div className={styles.iconCircle}>
+                        											<Image src="/drag.svg" alt="드래그" width={12} height={13} />
+                      											</div>
                       											<div className={styles.div43}>드래그앤드롭으로 주석 위치를 자유롭게 조정하세요</div>
                     										</div>
                   									</div>
