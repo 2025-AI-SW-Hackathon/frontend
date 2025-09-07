@@ -298,11 +298,11 @@ export default function Sidebar({ className = "" }: SidebarProps) {
             </div>
           </div>
 
-          {/* 사용 시간 위젯 */}
+          {/* 남은 시간 위젯 (추후 유료화를 위해 일단 넣음) */}
           <div className="mt-6 p-3 bg-[#2A3441] rounded-lg border border-[#3A4551]">
             <div className="flex items-center gap-2 text-sm text-white">
               <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span>480분 사용 / 600분</span>
+              <span>480분 남음 / 600분</span>
             </div>
           </div>
         </nav>
