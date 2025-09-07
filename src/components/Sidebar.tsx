@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Folder, FolderOpen, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import Image from "next/image";
@@ -15,6 +16,7 @@ export default function Sidebar({ className = "" }: SidebarProps) {
   const [showCollapseButton, setShowCollapseButton] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [guestAvatar, setGuestAvatar] = useState<string>("");
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, isAuthenticated, loading, setUserFromTokens } = useAuth();
@@ -67,6 +69,40 @@ export default function Sidebar({ className = "" }: SidebarProps) {
   const toggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders((prev) =>
+      prev.includes(folderId) ? prev.filter((id) => id !== folderId) : [...prev, folderId]
+    );
+  };
+
+  const lectureFolders = [
+    {
+      id: "database",
+      name: "데이터베이스",
+      lectures: [
+        { id: "db1", name: "관계형 DB 설계", status: "완료" },
+        { id: "db2", name: "SQL 최적화", status: "진행중" },
+      ],
+    },
+    {
+      id: "ai-ml",
+      name: "AI/머신러닝",
+      lectures: [
+        { id: "ml1", name: "딥러닝 기초", status: "완료" },
+        { id: "ml2", name: "자연어 처리", status: "완료" },
+        { id: "ml3", name: "컴퓨터 비전", status: "예정" },
+      ],
+    },
+    {
+      id: "web-dev",
+      name: "웹 개발",
+      lectures: [
+        { id: "web1", name: "React 심화", status: "완료" },
+        { id: "web2", name: "Node.js API", status: "진행중" },
+      ],
+    },
+  ];
 
   const handleSidebarMouseEnter = () => {
     if (hoverTimeout) {
@@ -201,6 +237,73 @@ export default function Sidebar({ className = "" }: SidebarProps) {
                 <span>{item.label}</span>
               </div>
             ))}
+          </div>
+
+          {/* 강의 폴더 섹션 */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">강의 폴더</span>
+              <button className="p-1 text-gray-400 hover:text-white hover:bg-[#2A3441] rounded">
+                <Plus className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              {lectureFolders.map((folder) => {
+                const isExpanded = expandedFolders.includes(folder.id);
+                return (
+                  <div key={folder.id}>
+                    <button
+                      onClick={() => toggleFolder(folder.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-[#2A3441] rounded-lg group"
+                    >
+                      {isExpanded ? (
+                        <FolderOpen className="w-4 h-4 text-amber-400" />
+                      ) : (
+                        <Folder className="w-4 h-4 text-amber-400" />
+                      )}
+                      <span className="flex-1 text-left">{folder.name}</span>
+                      {isExpanded ? (
+                        <ChevronDown className="w-3 h-3 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3 text-gray-400" />
+                      )}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="ml-6 mt-1 space-y-1">
+                        {folder.lectures.map((lecture) => (
+                          <div
+                            key={lecture.id}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#2A3441] rounded cursor-pointer"
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full inline-block ${
+                                lecture.status === '완료'
+                                  ? 'bg-green-400'
+                                  : lecture.status === '진행중'
+                                    ? 'bg-blue-400'
+                                    : 'bg-gray-400'
+                              }`}
+                            />
+                            <span className="flex-1">{lecture.name}</span>
+                            <span className="text-gray-500">{lecture.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 사용 시간 위젯 */}
+          <div className="mt-6 p-3 bg-[#2A3441] rounded-lg border border-[#3A4551]">
+            <div className="flex items-center gap-2 text-sm text-white">
+              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+              <span>480분 사용 / 600분</span>
+            </div>
           </div>
         </nav>
         
