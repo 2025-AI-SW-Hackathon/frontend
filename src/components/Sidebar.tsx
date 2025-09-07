@@ -19,9 +19,9 @@ export default function Sidebar({ className = "" }: SidebarProps) {
   const pathname = usePathname();
   const { user, signOut, isAuthenticated, loading, setUserFromTokens } = useAuth();
 
-  // 아바타 이미지 설정
+  // 프로필 이미지 설정
   useEffect(() => {
-    // 로딩 중이면 아바타 설정하지 않음
+    // 로딩 중이면 프로필 설정하지 않음
     if (loading) return;
 
     const avatarImages = [
@@ -87,19 +87,16 @@ export default function Sidebar({ className = "" }: SidebarProps) {
     {
       path: '/dashboard',
       label: '대시보드',
-      icon: '📊',
       isActive: pathname === '/dashboard'
     },
     {
       path: '/home',
       label: '강의 사용',
-      icon: '📚',
       isActive: pathname === '/home'
     },
     {
       path: '/settings',
       label: '설정',
-      icon: '⚙️',
       isActive: pathname === '/settings'
     }
   ];
@@ -115,7 +112,7 @@ export default function Sidebar({ className = "" }: SidebarProps) {
         >
           <button
             onClick={toggleCollapse}
-            className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-12 bg-[#A8C7FA] text-white rounded-r-lg shadow-lg transition-all duration-300 flex items-center justify-center hover:bg-[#8bb3f7] ${
+            className={`absolute left-2 top-1/2 transform -translate-y-1/2 w-8 h-12 bg-[#2A3441] text-white rounded-r-lg shadow-lg transition-all duration-300 flex items-center justify-center hover:bg-[#3A4551] ${
               showExpandButton ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
             }`}
           >
@@ -130,7 +127,7 @@ export default function Sidebar({ className = "" }: SidebarProps) {
           onClick={toggleCollapse}
           onMouseEnter={handleSidebarMouseEnter}
           onMouseLeave={handleSidebarMouseLeave}
-          className={`absolute top-1/2 left-[280px] transform -translate-y-1/2 w-8 h-12 bg-[#A8C7FA] text-white rounded-l-lg shadow-lg transition-all duration-300 flex items-center justify-center hover:bg-[#8bb3f7] z-10 ${
+          className={`absolute top-1/2 left-[280px] transform -translate-y-1/2 w-8 h-12 bg-[#2A3441] text-white rounded-l-lg shadow-lg transition-all duration-300 flex items-center justify-center hover:bg-[#3A4551] z-10 ${
             showCollapseButton ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
           }`}
         >
@@ -140,21 +137,18 @@ export default function Sidebar({ className = "" }: SidebarProps) {
 
       {/* 사이드바 */}
       <aside 
-        className={`${isCollapsed ? 'w-0 overflow-hidden' : 'w-70'} bg-white border-r border-[#e8ecf3] shadow-[4px_0_20px_rgba(0,0,0,0.04)] flex-shrink-0 relative transition-all duration-300 ${className}`}
+        className={`${isCollapsed ? 'w-0 overflow-hidden' : 'w-70'} bg-[#1D283C] border-r border-[#2A3441] shadow-[4px_0_20px_rgba(0,0,0,0.1)] flex-shrink-0 relative transition-all duration-300 ${className}`}
         onMouseEnter={handleSidebarMouseEnter}
         onMouseLeave={handleSidebarMouseLeave}
       >
         {/* 헤더 섹션 */}
-        <div className="p-8 pb-6 border-b border-[#f5f7fa] bg-[#A8C7FA] text-white">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center text-white font-bold text-base backdrop-blur-sm border border-white/10">
-              S
-            </div>
-            <div className="text-2xl font-bold text-shadow">Speak Note</div>
+        <div className="p-8 pb-6 border-b border-[#2A3441] bg-[#1D283C] text-white">
+          <div className="flex items-center gap-2 mb-8">
+            <span className="text-lg font-bold text-white">Speak Note</span>
           </div>
           
-          <div className="flex items-center gap-4 p-4 rounded-xl bg-white/15 backdrop-blur-sm border border-white/10">
-            {/* 모든 사용자: 아바타 이미지 표시 */}
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-[#2A3441] backdrop-blur-sm border border-[#3A4551]">
+            {/* 모든 사용자: 프로필 이미지 표시 */}
             <div className="w-12 h-12 bg-white rounded-full overflow-hidden shadow-lg">
               {loading ? (
                 // 로딩 중: 스켈레톤 표시
@@ -162,13 +156,13 @@ export default function Sidebar({ className = "" }: SidebarProps) {
               ) : guestAvatar ? (
                 <Image
                   src={`/profile/${guestAvatar}`}
-                  alt={isAuthenticated ? "사용자 아바타" : "게스트 아바타"}
+                  alt={isAuthenticated ? "사용자 프로필" : "게스트 프로필"}
                   width={60}
                   height={60}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                // 아바타가 없을 때 기본 표시
+                // 프로필이 없을 때 기본 표시
                 <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                   <span className="text-gray-400 text-xs">?</span>
                 </div>
@@ -192,21 +186,18 @@ export default function Sidebar({ className = "" }: SidebarProps) {
         </div>
         
         {/* 네비게이션 메뉴 */}
-        <nav className="p-6 flex-1">
-          <div className="space-y-2">
+        <nav className="p-4 flex-1">
+          <div className="space-y-1">
             {menuItems.map((item) => (
               <div
                 key={item.path}
                 onClick={() => router.push(item.path)}
-                className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all duration-300 ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-all duration-300 rounded-lg ${
                   item.isActive
-                    ? 'bg-[#A8C7FA] text-white shadow-[0_4px_15px_rgba(168,199,250,0.3)]'
-                    : 'hover:text-[#A8C7FA] hover:bg-[#f0f4ff] hover:translate-x-1'
-                } font-medium`}
+                    ? 'bg-[#2A3441] text-white'
+                    : 'text-white hover:bg-[#2A3441]'
+                }`}
               >
-                <div className="w-6 h-6 flex items-center justify-center text-lg">
-                  {item.icon}
-                </div>
                 <span>{item.label}</span>
               </div>
             ))}
@@ -214,16 +205,15 @@ export default function Sidebar({ className = "" }: SidebarProps) {
         </nav>
         
         {/* 하단 섹션 */}
-        <div className="p-6 border-t border-[#f5f7fa] bg-[#fbfcfd]">
+        <div className="absolute bottom-4 left-4 right-4">
           <div className="space-y-2">
             <button 
               onClick={handleAuthAction}
-              className="w-full p-3 bg-[#f8f9fa] text-gray-600 rounded-lg font-semibold transition-all duration-200 hover:bg-[#e8ecf3] hover:text-gray-800 text-sm border border-[#e8ecf3]"
+              className="w-full justify-start text-white hover:text-white hover:bg-[#2A3441] px-3 py-2 text-sm rounded-lg transition-all duration-200"
             >
               {isAuthenticated ? '로그아웃' : '로그인'}
             </button>
           </div>
-          
         </div>
       </aside>
     </>
