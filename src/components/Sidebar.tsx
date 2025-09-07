@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Folder, FolderOpen, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { Folder, Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
 import Image from "next/image";
 
@@ -16,7 +17,10 @@ export default function Sidebar({ className = "" }: SidebarProps) {
   const [showCollapseButton, setShowCollapseButton] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [guestAvatar, setGuestAvatar] = useState<string>("");
-  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [isCreatingFolder, setIsCreatingFolder] = useState<boolean>(false);
+  const [newFolderName, setNewFolderName] = useState<string>("새로운 폴더");
+  const [hoveredFolder, setHoveredFolder] = useState<string | null>(null);
+  const [showContextMenu, setShowContextMenu] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, isAuthenticated, loading, setUserFromTokens } = useAuth();
@@ -70,13 +74,39 @@ export default function Sidebar({ className = "" }: SidebarProps) {
     setIsCollapsed(!isCollapsed);
   };
 
-  const toggleFolder = (folderId: string) => {
-    setExpandedFolders((prev) =>
-      prev.includes(folderId) ? prev.filter((id) => id !== folderId) : [...prev, folderId]
-    );
+  const handleFolderRename = (folderId: string) => {
+    // TODO: 폴더 이름 변경 로직
+    console.log('폴더 이름 변경:', folderId);
+    setShowContextMenu(null);
   };
 
-  const lectureFolders = [
+  const handleFolderDelete = (folderId: string) => {
+    // TODO: 폴더 삭제 로직
+    console.log('폴더 삭제:', folderId);
+    setShowContextMenu(null);
+  };
+
+  // 컨텍스트 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showContextMenu) {
+        setShowContextMenu(null);
+      }
+    };
+
+    if (showContextMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showContextMenu]);
+
+  type LectureItem = { id: string; name: string; status: string };
+  type LectureFolder = { id: string; name: string; lectures: LectureItem[] };
+
+  const initialLectureFolders: LectureFolder[] = [
     {
       id: "database",
       name: "데이터베이스",
@@ -103,6 +133,25 @@ export default function Sidebar({ className = "" }: SidebarProps) {
       ],
     },
   ];
+
+  const [lectureFolders, setLectureFolders] = useState<LectureFolder[]>(initialLectureFolders);
+
+  const commitCreateFolder = () => {
+    const trimmed = newFolderName.trim();
+    if (!trimmed) {
+      setIsCreatingFolder(false);
+      setNewFolderName("새로운 폴더");
+      return;
+    }
+    const newFolder: LectureFolder = {
+      id: `folder-${Date.now()}`,
+      name: trimmed,
+      lectures: [],
+    };
+    setLectureFolders((prev) => [newFolder, ...prev]);
+    setIsCreatingFolder(false);
+    setNewFolderName("새로운 폴더");
+  };
 
   const handleSidebarMouseEnter = () => {
     if (hoverTimeout) {
@@ -243,58 +292,86 @@ export default function Sidebar({ className = "" }: SidebarProps) {
           <div className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">강의 폴더</span>
-              <button className="p-1 text-gray-400 hover:text-white hover:bg-[#2A3441] rounded">
+              <button
+                onClick={() => {
+                  setIsCreatingFolder(true);
+                  setNewFolderName("새로운 폴더");
+                }}
+                className="p-1 text-gray-400 hover:text-white hover:bg-[#2A3441] rounded"
+              >
                 <Plus className="w-3 h-3" />
               </button>
             </div>
 
             <div className="space-y-1">
-              {lectureFolders.map((folder) => {
-                const isExpanded = expandedFolders.includes(folder.id);
-                return (
-                  <div key={folder.id}>
-                    <button
-                      onClick={() => toggleFolder(folder.id)}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-[#2A3441] rounded-lg group"
-                    >
-                      {isExpanded ? (
-                        <FolderOpen className="w-4 h-4 text-amber-400" />
-                      ) : (
-                        <Folder className="w-4 h-4 text-amber-400" />
-                      )}
-                      <span className="flex-1 text-left">{folder.name}</span>
-                      {isExpanded ? (
-                        <ChevronDown className="w-3 h-3 text-gray-400" />
-                      ) : (
-                        <ChevronRight className="w-3 h-3 text-gray-400" />
-                      )}
-                    </button>
-
-                    {isExpanded && (
-                      <div className="ml-6 mt-1 space-y-1">
-                        {folder.lectures.map((lecture) => (
-                          <div
-                            key={lecture.id}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#2A3441] rounded cursor-pointer"
-                          >
-                            <span
-                              className={`w-2 h-2 rounded-full inline-block ${
-                                lecture.status === '완료'
-                                  ? 'bg-green-400'
-                                  : lecture.status === '진행중'
-                                    ? 'bg-blue-400'
-                                    : 'bg-gray-400'
-                              }`}
-                            />
-                            <span className="flex-1">{lecture.name}</span>
-                            <span className="text-gray-500">{lecture.status}</span>
-                          </div>
-                        ))}
-                      </div>
+              {isCreatingFolder && (
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg bg-[#2A3441]">
+                  <Folder className="w-4 h-4 text-amber-400" />
+                  <input
+                    autoFocus
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onBlur={commitCreateFolder}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitCreateFolder();
+                      if (e.key === 'Escape') {
+                        setIsCreatingFolder(false);
+                        setNewFolderName("새로운 폴더");
+                      }
+                    }}
+                    className="flex-1 bg-white/5 border border-[#3A4551] rounded-md px-2 py-1 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A8C7FA]"
+                    placeholder="새로운 폴더"
+                  />
+                </div>
+              )}
+              {lectureFolders.map((folder) => (
+                <div key={folder.id} className="relative">
+                  <div 
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg group ${
+                      hoveredFolder === folder.id || showContextMenu === folder.id 
+                        ? 'bg-[#2A3441]' 
+                        : 'hover:bg-[#2A3441]'
+                    }`}
+                    onMouseEnter={() => setHoveredFolder(folder.id)}
+                    onMouseLeave={() => setHoveredFolder(null)}
+                  >
+                    <Folder className="w-4 h-4 text-amber-400" />
+                    <Link href={`/folders/${folder.id}`} className="flex-1 text-left">
+                      {folder.name}
+                    </Link>
+                    {(hoveredFolder === folder.id || showContextMenu === folder.id) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowContextMenu(showContextMenu === folder.id ? null : folder.id);
+                        }}
+                        className="p-1 rounded hover:bg-white/5"
+                      >
+                        <MoreHorizontal className="w-3 h-3 text-gray-400" />
+                      </button>
                     )}
                   </div>
-                );
-              })}
+
+                  {showContextMenu === folder.id && (
+                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-fit">
+                      <button
+                        onClick={() => handleFolderRename(folder.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg whitespace-nowrap"
+                      >
+                        <Edit className="w-4 h-4" />
+                        강의명 변경
+                      </button>
+                      <button
+                        onClick={() => handleFolderDelete(folder.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg whitespace-nowrap"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        강의 삭제
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
