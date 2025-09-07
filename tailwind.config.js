@@ -10,16 +10,16 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          50: '#eef4ff',
-          100: '#d9e6ff',
-          200: '#b8d0ff',
-          300: '#8fb3ff',
-          400: '#5d8dff',
-          500: '#2563eb',
-          600: '#1d4ed8',
-          700: '#1e40af',
-          800: '#1e3a8a',
-          900: '#1e3a8a'
+          50: '#f0f6ff',
+          100: '#e1edff',
+          200: '#c7d9ff',
+          300: '#a8c7fa',
+          400: '#8bb3f7',
+          500: '#6b9ef4',
+          600: '#4d89f1',
+          700: '#2f74ee',
+          800: '#1a5feb',
+          900: '#0d4ae8'
         }
       },
       borderRadius: {
