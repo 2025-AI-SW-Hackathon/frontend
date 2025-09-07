@@ -11,11 +11,11 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // 이미 로그인된 사용자는 대시보드로 리다이렉트
+    // 이미 로그인된 사용자는 대시보드로 리다이렉트 (새로고침 포함)
     if (auth.isLoggedIn()) {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     }
-  }, [router]);
+  }, []);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
+import Image from "next/image";
 
 interface SidebarProps {
   className?: string;
@@ -13,13 +14,54 @@ export default function Sidebar({ className = "" }: SidebarProps) {
   const [showExpandButton, setShowExpandButton] = useState(false);
   const [showCollapseButton, setShowCollapseButton] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [guestAvatar, setGuestAvatar] = useState<string>("");
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAuthenticated, loading, setUserFromTokens } = useAuth();
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
+  // 아바타 이미지 설정
+  useEffect(() => {
+    // 로딩 중이면 아바타 설정하지 않음
+    if (loading) return;
+
+    const avatarImages = [
+      "carrot.png", 
+      "dolphin.png", 
+      "duck.png", 
+      "earth.png", 
+      "fire.png", 
+      "star.png", 
+      "sunset.png", 
+      "tree1.png", 
+      "tree2.png", 
+      "trophy.png"
+    ];
+
+    if (isAuthenticated && user?.id) {
+      // 로그인한 사용자: ID 기반으로 고정된 이미지 선택
+      const userIndex = user.id % avatarImages.length;
+      setGuestAvatar(avatarImages[userIndex]);
+    } else if (!isAuthenticated) {
+      // 게스트: 랜덤 이미지 선택
+      const randomIndex = Math.floor(Math.random() * avatarImages.length);
+      setGuestAvatar(avatarImages[randomIndex]);
+    }
+  }, [isAuthenticated, user?.id, loading]);
+
+  // 로그인 상태가 변경될 때 사용자 정보 다시 가져오기
+  useEffect(() => {
+    if (isAuthenticated && !user && !loading) {
+      setUserFromTokens();
+    }
+  }, [isAuthenticated, user, loading, setUserFromTokens]);
+
+  const handleAuthAction = async () => {
+    if (isAuthenticated) {
+      await signOut();
+      router.push('/');
+    } else {
+      router.push('/auth/signin');
+    }
   };
 
   const toggleCollapse = () => {
@@ -112,12 +154,39 @@ export default function Sidebar({ className = "" }: SidebarProps) {
           </div>
           
           <div className="flex items-center gap-4 p-4 rounded-xl bg-white/15 backdrop-blur-sm border border-white/10">
-            <div className="w-10 h-10 bg-white/90 text-[#A8C7FA] rounded-full flex items-center justify-center font-bold text-base shadow-lg">
-              {user?.name?.charAt(0) || 'A'}
+            {/* 모든 사용자: 아바타 이미지 표시 */}
+            <div className="w-12 h-12 bg-white rounded-full overflow-hidden shadow-lg">
+              {loading ? (
+                // 로딩 중: 스켈레톤 표시
+                <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+              ) : guestAvatar ? (
+                <Image
+                  src={`/profile/${guestAvatar}`}
+                  alt={isAuthenticated ? "사용자 아바타" : "게스트 아바타"}
+                  width={60}
+                  height={60}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                // 아바타가 없을 때 기본 표시
+                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-400 text-xs">?</span>
+                </div>
+              )}
             </div>
             <div>
-              <h4 className="text-base font-semibold mb-1">{user?.name || '사용자'}</h4>
-              <p className="text-sm opacity-80">대시보드</p>
+              {loading ? (
+                // 로딩 중: 스켈레톤 표시
+                <>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse mb-1 w-20"></div>
+                  <div className="h-3 bg-gray-200 rounded animate-pulse w-24"></div>
+                </>
+              ) : (
+                <>
+                  <h4 className="text-base font-semibold mb-1">{user?.name || '게스트'}</h4>
+                  <p className="text-sm opacity-80">{user?.email || '게스트 이메일'}</p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -148,10 +217,10 @@ export default function Sidebar({ className = "" }: SidebarProps) {
         <div className="p-6 border-t border-[#f5f7fa] bg-[#fbfcfd]">
           <div className="space-y-2">
             <button 
-              onClick={handleSignOut}
+              onClick={handleAuthAction}
               className="w-full p-3 bg-[#f8f9fa] text-gray-600 rounded-lg font-semibold transition-all duration-200 hover:bg-[#e8ecf3] hover:text-gray-800 text-sm border border-[#e8ecf3]"
             >
-              로그아웃
+              {isAuthenticated ? '로그아웃' : '로그인'}
             </button>
           </div>
           
