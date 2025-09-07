@@ -22,21 +22,21 @@ export default function DashboardPage() {
     {
       title: "실시간 STT로 강의를 놓치지 마세요",
       description: "말하는 속도를 따라가는 실시간 음성인식",
-      icon: "🎤",
+      icon: "/dashboard/microphone.png",
       bgColor: "bg-blue-50",
       iconColor: "text-blue-600",
     },
     {
       title: "AI 요약으로 핵심만 빠르게 파악하세요",
       description: "GPT 기반 자동 요약과 주석 생성",
-      icon: "🧠",
+      icon: "/dashboard/AI-sparkle.png",
       bgColor: "bg-purple-50",
       iconColor: "text-purple-600",
     },
     {
       title: "모르는 개념은 AI가 자동으로 설명해드려요",
       description: "RAG 기반 실시간 개념 보강 시스템",
-      icon: "💡",
+      icon: "/dashboard/hand-wave.png",
       bgColor: "bg-amber-50",
       iconColor: "text-amber-600",
     },
@@ -162,8 +162,14 @@ export default function DashboardPage() {
                       <h3 className="font-semibold text-gray-900 mb-2 text-sm leading-tight">{card.title}</h3>
                       <p className="text-xs text-gray-600">{card.description}</p>
                     </div>
-                    <div className={`p-3 rounded-lg ${card.iconColor} bg-white/50`}>
-                      <span className="text-2xl">{card.icon}</span>
+                    <div>
+                      <Image
+                        src={card.icon}
+                        alt="카드 아이콘"
+                        width={42}
+                        height={42}
+                        className="w-[42px] h-[42px]"
+                      />
                     </div>
                   </div>
                 </div>
