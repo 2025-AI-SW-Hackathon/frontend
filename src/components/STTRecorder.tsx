@@ -151,20 +151,13 @@ export default function STTRecorder() {
           </button>
         </>
       ) : (
-<button
-  className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-gray-300 bg-white text-gray-700 text-sm"
-  onClick={startRecording}
->
-  <div className="w-3 h-4 flex items-center justify-center">
-    <div className="w-3 h-4 relative">
-      <div className="w-3 h-4 bg-transparent absolute top-0 left-0" />
-    </div>
-  </div>
-  <div className="flex items-center gap-2">
-    <Image src={PLAY} alt="Play" width={15} height={15} />
-    <span className="text-gray-700 text-sm">녹음 시작</span>
-  </div>
-</button>
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-400 text-gray-800 text-sm bg-white"
+            onClick={startRecording}
+          >
+          <Image src={PLAY} alt="Play" width={14} height={14} />
+          <span className="text-gray-700 text-sm">녹음 시작</span>
+        </button>
       )}
     </div>
   );

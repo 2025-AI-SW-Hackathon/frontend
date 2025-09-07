@@ -10,15 +10,25 @@ interface HeaderProps {
 export default function Header({ fileName }: HeaderProps) {
 
   return (
-    <header className="w-full h-[75px] flex items-center justify-between px-6 border-b border-gray-200 bg-white">
-      <div>
-        <h2 className="text-base font-semibold leading-[28px] text-gray-800">Speak-Note</h2>
-        <p className="text-sm text-gray-500 leading-[20px]">
-          {fileName ?? "강의자료 이름"}
-        </p>
-      </div>
-      <div className="flex items-center gap-4">
-        <STTRecorder />
+    <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-bold text-gray-900">강의 사용</h1>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>홈</span>
+            <span>/</span>
+            <span>강의 사용</span>
+            {fileName && (
+              <>
+                <span>/</span>
+                <span className="text-gray-700 font-medium">{fileName}</span>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <STTRecorder />
+        </div>
       </div>
     </header>
   );
