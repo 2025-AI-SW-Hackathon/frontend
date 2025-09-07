@@ -41,9 +41,9 @@ export default function GoogleCallbackPage() {
           });
           setStatus('success');
           
-          // 대시보드로 리다이렉트
+          // 대시보드로 리다이렉트 (새로고침 포함)
           setTimeout(() => {
-            router.push('/dashboard');
+            window.location.href = '/dashboard';
           }, 1000);
         }
       } catch (error: any) {
