@@ -164,48 +164,110 @@ function buildSlidesPayload(
     const existingPdfBytes = await pdfFile.arrayBuffer();
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
     pdfDoc.registerFontkit(fontkit);
-    const fontBytes = await fetch("/fonts/MaruBuri-Bold.ttf").then((res) => res.arrayBuffer());
+    const fontBytes = await fetch("/fonts/Pretendard-Regular.ttf").then((res) => res.arrayBuffer());
     const customFont = await pdfDoc.embedFont(fontBytes);
-    const scaledMaxWidth = (annotation.width / rendered.width) * pageWidth;
 
     const pages = pdfDoc.getPages();
     for (const annotation of dropped) {
       const page = pages[annotation.pageNumber - 1];
       const rendered = renderedSizes[annotation.pageNumber];
       if (!rendered) continue;
+      
+      // 디버깅: annotation 크기 정보 확인
+      console.log('Annotation size:', {
+        width: annotation.width,
+        height: annotation.height,
+        x: annotation.x,
+        y: annotation.y
+      });
 
       const pageWidth = page.getWidth();
       const pageHeight = page.getHeight();
       const scaledX = (annotation.x / rendered.width) * pageWidth;
       const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
-      const textColor =
-        annotation.answerState === 0
-          ? rgb(1, 0, 0)
-          : annotation.answerState === 2
-          ? rgb(0.2, 0.4, 0.9)
-          : rgb(1, 0.6, 0);
+      
+      // 웹 UI에서 설정된 실제 크기를 PDF에 그대로 반영
+      // 픽셀을 포인트로 변환 (실험해보고 0.5로 결정함)
+      const pixelToPointRatio = 0.5;
+      const scaledWidth = ((annotation.width ?? 300) / rendered.width) * pageWidth * pixelToPointRatio;
+      const scaledHeight = ((annotation.height ?? 150) / rendered.height) * pageHeight * pixelToPointRatio;
+      
+      // 주석 종류에 따른 배경색 설정
+      const textColor = rgb(0, 0, 0); // 텍스트는 검은색
+      const backgroundColor = 
+        annotation.answerState === 2
+          ? rgb(0.937, 0.937, 0.937) // bg-gray-200 (음성 - QuestionAnnotationCard)
+          : annotation.answerState === 0
+          ? rgb(0.996, 0.925, 0.918) // #FEECEA (질문 - AnnotationCard)
+          : rgb(0.937, 0.969, 1); // #EFF6FF (자료 기반 - ExternalAnnotationCard)
+      const borderColor = rgb(0.8, 0.8, 0.8); // border-gray-200
 
       try {
         const parsed = JSON.parse(annotation.text);
-        const lines = parsed.lines ?? parsed.refinedText?.split("\n") ?? [parsed.refinedText];
-        lines.forEach((line: string, i: number) => {
-          page.drawText(line, {
+        const refinedText = parsed.refinedText || annotation.text;
+        const lines = refinedText.split("\n").filter((line: string) => line.trim());
+        
+        if (lines.length > 0) {
+          // 웹 UI 크기를 그대로 사용
+          const padding = 12;
+          const fontSize = 12;
+          const lineHeight = fontSize * 1.2;
+          
+          // 웹에서 설정된 크기로 배경 그리기
+          page.drawRectangle({
             x: scaledX,
-            y: scaledY - i * 12,
-            size: 12,
-            font: customFont,
-            color: textColor,
-            maxWidth: scaledMaxWidth
-                    });
-        });
+            y: scaledY - scaledHeight,
+            width: scaledWidth,
+            height: scaledHeight,
+            color: backgroundColor,
+            borderColor: borderColor,
+            borderWidth: 1,
+          });
+          
+          // 텍스트 그리기 (웹 UI 크기 내에서)
+          lines.forEach((line: string, i: number) => {
+            page.drawText(line, {
+              x: scaledX + padding,
+              y: scaledY - padding - (i + 1) * lineHeight,
+              size: fontSize,
+              ...(customFont && { font: customFont }),
+              color: textColor,
+              maxWidth: scaledWidth - padding * 2
+            });
+          });
+        }
       } catch {
-        page.drawText(annotation.text, {
-          x: scaledX,
-          y: scaledY,
-          size: 12,
-          font: customFont,
-          color: textColor,
-        });
+        // JSON 파싱 실패 시 원본 텍스트 사용
+        const lines = annotation.text.split("\n").filter((line: string) => line.trim());
+        
+        if (lines.length > 0) {
+          const padding = 12;
+          const fontSize = 12;
+          const lineHeight = fontSize * 1.2;
+          
+          // 웹에서 설정된 크기로 배경 그리기
+          page.drawRectangle({
+            x: scaledX,
+            y: scaledY - scaledHeight,
+            width: scaledWidth,
+            height: scaledHeight,
+            color: backgroundColor,
+            borderColor: borderColor,
+            borderWidth: 1,
+          });
+          
+          // 텍스트 그리기 (웹 UI 크기 내에서)
+          lines.forEach((line: string, i: number) => {
+            page.drawText(line, {
+              x: scaledX + padding,
+              y: scaledY - padding - (i + 1) * lineHeight,
+              size: fontSize,
+              ...(customFont && { font: customFont }),
+              color: textColor,
+              maxWidth: scaledWidth - padding * 2
+            });
+          });
+        }
       }
     }
 
