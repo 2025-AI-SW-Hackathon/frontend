@@ -20,6 +20,30 @@ export default function Home() {
   const [isPdfReady, setIsPdfReady] = useState(false);
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+  // 마크다운을 PDF 텍스트로 변환하는 함수
+  function parseMarkdownToText(markdown: string): string[] {
+    // 간단한 마크다운 파싱
+    let text = markdown
+      // 코드 블록 제거 (```로 감싸진 부분)
+      .replace(/```[\s\S]*?```/g, '')
+      // 인라인 코드 제거 (`로 감싸진 부분)
+      .replace(/`[^`]*`/g, '')
+      // 볼드 제거 (**로 감싸진 부분)
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      // 이탤릭 제거 (*로 감싸진 부분)
+      .replace(/\*([^*]+)\*/g, '$1')
+      // 링크 제거 ([텍스트](URL) 형태)
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // 헤더 제거 (#으로 시작하는 부분)
+      .replace(/^#+\s*/gm, '')
+      // 리스트 아이템 제거 (- 또는 *로 시작하는 부분)
+      .replace(/^[\s]*[-*]\s*/gm, '• ')
+      // 빈 줄 정리
+      .replace(/\n\s*\n/g, '\n');
+    
+    return text.split('\n').filter(line => line.trim());
+  }
+
   type RenderedSizes = Record<number, { width: number; height: number }>;
 
   type ServerSlide = { pageNumber: number; annotations: any[] };
@@ -205,7 +229,8 @@ function buildSlidesPayload(
       try {
         const parsed = JSON.parse(annotation.text);
         const refinedText = parsed.refinedText || annotation.text;
-        const lines = refinedText.split("\n").filter((line: string) => line.trim());
+        // 마크다운을 텍스트로 변환
+        const lines = parseMarkdownToText(refinedText);
         
         if (lines.length > 0) {
           // 웹 UI 크기를 그대로 사용
@@ -238,7 +263,7 @@ function buildSlidesPayload(
         }
       } catch {
         // JSON 파싱 실패 시 원본 텍스트 사용
-        const lines = annotation.text.split("\n").filter((line: string) => line.trim());
+        const lines = parseMarkdownToText(annotation.text);
         
         if (lines.length > 0) {
           const padding = 12;
