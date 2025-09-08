@@ -5,11 +5,17 @@ import Header from "@/components/Header";
 import UploadArea from "@/components/UploadArea";
 import PDFViewer from "@/components/PDFViewer";
 import RightPanel from "@/components/RightPanel";
+
 import { useState ,useEffect} from "react";
+
 import { DroppedAnnotation } from "@/components/types";
 import { PDFDocument } from "pdf-lib";
 import html2canvas from "html2canvas";
 import { saveAs } from "file-saver";
+import { useRef, useState ,useEffect} from "react";
+import { useSearchParams } from "next/navigation";
+import { FileAnnotationResponse } from "@/types/FileAnnotationResponse";
+import { useAuth } from "@/components/AuthContext";
 
 export default function Home() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -19,14 +25,26 @@ export default function Home() {
   const [containerWidth, setContainerWidth] = useState<number>(600);
   const [isPdfReady, setIsPdfReady] = useState(false);
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [versionMeta, setVersionMeta] = useState<{version?: number; latest?: boolean; snapshotCreatedAt?: string}>({});
   type RenderedSizes = Record<number, { width: number; height: number }>;
-
+  const { user, signIn, signOut, isAuthenticated } = useAuth();
   type ServerSlide = { pageNumber: number; annotations: any[] };
   const [serverSlides, setServerSlides] = useState<ServerSlide[] | null>(null);
 
+  const buildAuthHeaders = (token?: string) => {
+    const h: Record<string, string> = {};
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  };
+  const sp = useSearchParams();
+  const mode = sp.get("mode");
+  const qpFileId = sp.get("fileId");
+  const qpVersion = sp.get("version");
+  const isHistoryMode = mode === "history";
   // 1) isPdfReady + fileId 준비되면 서버에서 최신 스냅샷 가져오기
   useEffect(() => {
+    if (isHistoryMode) return;
     if (!isPdfReady || !fileId) return;
     (async () => {
       try {
@@ -37,7 +55,7 @@ export default function Home() {
               const { auth } = require("@/lib/auth");
               const token = auth.getAccessToken?.();
               if (token) headers["Authorization"] = `Bearer ${token}`;
-            } catch {}
+            } catch (_) {}
             return headers;
           })(),
         });
@@ -47,7 +65,61 @@ export default function Home() {
         console.warn("스냅샷 조회 실패:", e);
       }
     })();
-  }, [isPdfReady, fileId]);
+  }, [isPdfReady, fileId, isHistoryMode]);
+
+// 히스토리 모드: 서버에서 파일+주석 스냅샷 조회 → 상태 수화
+useEffect(() => {
+    if (!isHistoryMode) return;
+    if (!qpFileId) return;
+    (async () => {
+      try {
+        const url = `${API_BASE_URL}/api/files/${qpFileId}/annotations${qpVersion ? `?version=${qpVersion}` : ""}`;
+             const res = await fetch(url, {
+                 credentials: "include",
+                 headers: (() => {
+                  const headers: Record<string, string> = {};
+                  try {
+                    const { auth } = require("@/lib/auth");
+                    const token = auth.getAccessToken?.();
+                    if (token) headers["Authorization"] = `Bearer ${token}`;
+                  } catch (_) {}
+                  return headers;
+                })(),               });        if (!res.ok) throw new Error(await res.text());
+        const data /*: FileAnnotationResponse*/ = await res.json();
+        // 파일/주석 상태 세팅
+        setPdfFile(null);                 // File 대신 URL 사용
+        setPdfUrl(data.fileUrl);
+        setFileId(data.fileId);
+        setServerSlides(data.slides || []);
+        setVersionMeta({ version: data.version, latest: data.latest, snapshotCreatedAt: data.snapshotCreatedAt });
+        
+             const fileRes = await fetch(`${API_BASE_URL}/api/files/${data.fileId}/content`, {
+                 credentials: "include",
+                 headers: (() => {
+                  const headers: Record<string, string> = {};
+                  try {
+                    const { auth } = require("@/lib/auth");
+                    const token = auth.getAccessToken?.();
+                    if (token) headers["Authorization"] = `Bearer ${token}`;
+                  } catch (_) {}
+                  return headers;
+                })(),                });
+               if (!fileRes.ok) throw new Error(await fileRes.text());
+               const blob = await fileRes.blob(); // application/pdf
+               const objectUrl = URL.createObjectURL(blob);
+               setPdfFile(null);          // File 대신 URL 사용
+               setPdfUrl(objectUrl);
+        
+        
+        
+        setIsPdfReady(true);              // 이후 restore 이펙트가 픽셀 변환해서 dropped 채움
+      } catch (e) {
+        console.error(e);
+        alert("히스토리 불러오기에 실패했습니다.");
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHistoryMode, qpFileId, qpVersion]);
   
 function restoreFromSlides(
   slides: ServerSlide[],
@@ -58,16 +130,20 @@ function restoreFromSlides(
     const r = rendered[s.pageNumber];
     if (!r) continue;
     for (const a of s.annotations) {
-      out.push({
-        id: a.id,
-        pageNumber: s.pageNumber,
-        x: (a.x ?? 0) * r.width,
-        y: (a.y ?? 0) * r.height,
-        width: Math.max((a.w ?? 0.2) * r.width, 100),
-        height: Math.max((a.h ?? 0.1) * r.height, 100),
-        answerState: a.answerState ?? 2,
-        text: a.text ?? "",
-      });
+            const nx = (a.x ?? a.position?.x ?? 0);
+            const ny = (a.y ?? a.position?.y ?? 0);
+            const nw = (a.w ?? a.size?.width ?? 0.2);
+            const nh = (a.h ?? a.size?.height ?? 0.1);
+            out.push({
+              id: a.id,
+              pageNumber: s.pageNumber,
+              x: nx * r.width,
+              y: ny * r.height,
+              width: Math.max(nw * r.width, 100),
+              height: Math.max(nh * r.height, 100),
+              answerState: a.answerState ?? 2,
+              text: a.text ?? "",
+            });
     }
   }
   return out;
@@ -159,10 +235,21 @@ function buildSlidesPayload(
 
   // PDF에 어노테이션 그려서 "다운로드" (기존 기능 유지)
   async function handleSaveWithAnnotations() {
-    if (!pdfFile) return;
-
-    const existingPdfBytes = await pdfFile.arrayBuffer();
+      const existingPdfBytes =
+        pdfFile
+          ? await pdfFile.arrayBuffer()
+          : pdfUrl
+            ? await fetch(pdfUrl).then(r => r.arrayBuffer())
+            : null;
+      if (!existingPdfBytes) {
+        alert("PDF 원본이 없습니다.");
+        return;
+      }
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    pdfDoc.registerFontkit(fontkit);
+    const fontBytes = await fetch("/fonts/MaruBuri-Bold.ttf").then((res) => res.arrayBuffer());
+    const customFont = await pdfDoc.embedFont(fontBytes);
+
 
     const pages = pdfDoc.getPages();
     
@@ -171,11 +258,17 @@ function buildSlidesPayload(
       const page = pages[annotation.pageNumber - 1];
       const rendered = renderedSizes[annotation.pageNumber];
       if (!rendered) continue;
-
       const pageWidth = page.getWidth();
       const pageHeight = page.getHeight();
       const scaledX = (annotation.x / rendered.width) * pageWidth;
       const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
+      const scaledMaxWidth = ((annotation.width ?? 180) / rendered.width) * pageWidth;
+      const textColor =
+        annotation.answerState === 0
+          ? rgb(1, 0, 0)
+          : annotation.answerState === 2
+          ? rgb(0.2, 0.4, 0.9)
+          : rgb(1, 0.6, 0);
       
       // 주석 카드의 실제 내용 영역만 찾기
       const cardElement = document.querySelector(`[data-ann-id="${annotation.id}"]`) as HTMLElement;
@@ -192,6 +285,7 @@ function buildSlidesPayload(
       console.log('Card HTML:', cardElement.outerHTML);
       
       const originalStyles: { element: HTMLElement; transform: string; marginTop: string }[] = [];
+
 
       try {
         
@@ -319,7 +413,7 @@ function buildSlidesPayload(
   
       // 새로고침 대비 로컬 캐시(선택)
       localStorage.setItem(`annotations:${fileId}`, JSON.stringify({ slides }));
-  
+      console.log("fileId:",fileId)
       const res = await fetch(`${API_BASE_URL}/api/annotations/snapshot`, {
         method: "POST",
         headers: (() => {
@@ -352,7 +446,7 @@ function buildSlidesPayload(
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <Header fileName={pdfFile?.name} />
         <main className="flex flex-1 h-0">
-          {!pdfFile ? (
+        { (!pdfFile && !pdfUrl) ?(
             <UploadArea />
           ) : !isPdfReady ? (
             <div className="w-full flex items-center justify-center text-gray-600 text-3xl animate-pulse">
@@ -361,14 +455,14 @@ function buildSlidesPayload(
           ) : (
             <>
               <div className="flex-1 overflow-y-auto">
-                <PDFViewer
-                  dropped={dropped}
-                  setDropped={setDropped}
-                  file={pdfFile}
-                  containerWidth={containerWidth}
-                  setContainerWidth={setContainerWidth}
-                  setRenderedSizes={setRenderedSizes}
-                />
+              + <PDFViewer
+   dropped={dropped}
+   setDropped={setDropped}
+   fileOrUrl={pdfUrl ?? pdfFile}
+   containerWidth={containerWidth}
+   setContainerWidth={setContainerWidth}
+   setRenderedSizes={setRenderedSizes}
+ />
               </div>
               <div className="w-[400px] h-full overflow-y-auto border-l border-gray-200">
                 <RightPanel

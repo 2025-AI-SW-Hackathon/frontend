@@ -1,4 +1,5 @@
 import { LoginResponse, BaseResponse } from '@/types/auth';
+import { FileAnnotationResponse } from '@/types/FileAnnotationResponse';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
@@ -80,3 +81,20 @@ export const api = {
     });
   },
 }; 
+
+
+export async function fetchFileAnnotations(
+  fileId: number,
+  version?: number
+): Promise<FileAnnotationResponse> {
+  const qs = new URLSearchParams();
+  if (version != null) qs.set('version', String(version));
+  const url = `/api/files/${fileId}/annotations${qs.toString() ? `?${qs.toString()}` : ''}`;
+
+  const res = await fetch(url, { credentials: 'include' });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Annotation fetch failed: ${res.status} ${text}`);
+  }
+  return res.json();
+}

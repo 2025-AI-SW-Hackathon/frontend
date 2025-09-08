@@ -11,24 +11,32 @@ import dynamic from "next/dynamic";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `/pdf.worker.js`;
 
-interface Props {
-  dropped: DroppedAnnotation[];
-  setDropped: React.Dispatch<React.SetStateAction<DroppedAnnotation[]>>;
-  file: File | null;
-  containerWidth: number;
-  setContainerWidth: (width: number) => void;
-  setRenderedSizes: React.Dispatch<
-    React.SetStateAction<Record<number, { width: number; height: number }>>
-  >;
-}
+// interface Props {
+//   dropped: DroppedAnnotation[];
+//   setDropped: React.Dispatch<React.SetStateAction<DroppedAnnotation[]>>;
+//   file: File | null;
+//   containerWidth: number;
+//   setContainerWidth: (width: number) => void;
+//   setRenderedSizes: React.Dispatch<
+//     React.SetStateAction<Record<number, { width: number; height: number }>>
+//   >;
+// }
+
+ interface Props {
+     dropped: DroppedAnnotation[];
+     setDropped: React.Dispatch<React.SetStateAction<DroppedAnnotation[]>>;
+     /** File | string(url) | null 모두 허용 */
+     fileOrUrl: File | string | null;
+     containerWidth: number;
+     setContainerWidth: (width: number) => void;
+     setRenderedSizes: React.Dispatch<
+       React.SetStateAction<Record<number, { width: number; height: number }>>
+     >;
+   }
+
 
 export default function PDFViewer({
-  dropped,
-  setDropped,
-  file,
-  containerWidth,
-  setContainerWidth,
-  setRenderedSizes,
+  dropped, setDropped, fileOrUrl, containerWidth, setContainerWidth, setRenderedSizes
 }: Props) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -45,7 +53,7 @@ export default function PDFViewer({
     return () => window.removeEventListener("resize", updateWidth);
   }, [setContainerWidth]);
 
-  if (!file) {
+  if (!fileOrUrl) {
     return (
       <div className="text-center text-gray-500 mt-20">PDF 파일을 업로드하세요</div>
     );
@@ -55,7 +63,7 @@ export default function PDFViewer({
     <div ref={containerRef} className="w-full h-full flex bg-[#f9fafb]">
       {/* 왼쪽 썸네일 영역 */}
       <div className="w-[200px] overflow-y-auto border-r border-gray-200 bg-white py-4 px-2">
-        <Document file={file} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
+        <Document file={fileOrUrl || undefined}  onLoadSuccess={({ numPages }) => setNumPages(numPages)}>
           {Array.from(new Array(numPages), (_, i) => (
             <div
               key={i}
@@ -73,7 +81,7 @@ export default function PDFViewer({
 
       {/* 본문 페이지 */}
       <div className="flex-1 overflow-y-auto flex justify-center px-4 py-6">
-        <Document file={file}>
+        <Document file={fileOrUrl || undefined} >
           <div
             id={`pdf-page-${currentPage}`}
             className="relative"
