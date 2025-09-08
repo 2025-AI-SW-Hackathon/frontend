@@ -9,6 +9,7 @@ interface RightPanelProps {
   dropped: DroppedAnnotation[];
   renderedSizes: Record<number, { width: number; height: number }>;
   pdfFile: File | null;
+  pdfUrl?: string | null;
   // ✅ 파라미터 없이 호출하는 형태로 통일
   handleSaveWithAnnotations: () => Promise<void>;
   handleSaveAllAnnotations: () => Promise<void>;
@@ -76,10 +77,10 @@ export default function RightPanel({
         <button
           className="w-full h-10 bg-indigo-500 hover:bg-indigo-600 rounded-lg flex items-center justify-center gap-2 text-white text-base transition"
           onClick={() => {
-            if (!pdfFile) {
-              alert("PDF 파일을 먼저 업로드하세요.");
-              return;
-            }
+            // if (!pdfFile) {
+            //   alert("PDF 파일을 먼저 업로드하세요.");
+            //   return;
+            // }
             handleSaveWithAnnotations();
           }}
         >
