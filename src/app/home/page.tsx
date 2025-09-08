@@ -404,7 +404,7 @@ export default function Home() {
     <div className="flex h-screen">
       <Sidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
-        <Header fileName={pdfFile?.name} />
+      <Header fileId={fileId} fileName={pdfFile?.name ?? ""} />
         <main className="flex flex-1 h-0">
           {!pdfFile && !pdfUrl ? (
             <UploadArea />

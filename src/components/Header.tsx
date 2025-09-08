@@ -3,11 +3,12 @@
 
 import Image from "next/image";
 import STTRecorder from "@/components/STTRecorder";
-interface HeaderProps {
-  fileName?: string; // 파일명을 optional하게 props로 받음
-}
+type HeaderProps = {
+  fileId?: number | string | null;
+  fileName?: string;
+};
 
-export default function Header({ fileName }: HeaderProps) {
+export default function Header({ fileId, fileName }: HeaderProps) {
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -27,7 +28,7 @@ export default function Header({ fileName }: HeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <STTRecorder />
+          <STTRecorder fileId={fileId} />
         </div>
       </div>
     </header>

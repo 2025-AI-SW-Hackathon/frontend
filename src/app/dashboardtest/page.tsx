@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from "@/components/AuthContext";
 
 export default function DashboardTestPage() {
   const router = useRouter();
+  const { user, signIn, signOut, isAuthenticated } = useAuth();
 
   // 수동 입력용
   const [fileIdInput, setFileIdInput] = useState<string>('');

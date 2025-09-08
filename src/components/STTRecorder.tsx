@@ -6,7 +6,11 @@ import Image from "next/image";
 import PLAY from "@/components/image/play.svg";
 import STOP from "@/components/image/stop.svg";
 
-export default function STTRecorder() {
+type STTRecorderProps = {
+  fileId?: string | number | null;
+};
+
+export default function STTRecorder({ fileId }: STTRecorderProps) {
   const { addAnnotation } = useAnnotation();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -18,7 +22,8 @@ export default function STTRecorder() {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
+  const fileIdRef = useRef<typeof fileId>(fileId);
+  useEffect(() => { fileIdRef.current = fileId; }, [fileId]);
   const formatTime = (seconds: number) => {
     const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
     const secs = String(seconds % 60).padStart(2, "0");
@@ -38,7 +43,9 @@ export default function STTRecorder() {
 
   const startRecording = async () => {
     try {
-      const ws = new WebSocket(API_WSS_URL!);
+      const url = new URL(process.env.NEXT_PUBLIC_API_WSS_URL!);
+      url.searchParams.set("fileId", String(fileIdRef.current));
+      const ws = new WebSocket(url.toString());
       setSocket(ws);
 
       ws.onopen = async () => {
@@ -66,6 +73,8 @@ export default function STTRecorder() {
           const pcm = convertFloat32ToInt16(input);
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(pcm.buffer);
+            ws.send(JSON.stringify({ type: "init", fileId: fileIdRef.current }));
+
           }}}
           catch (err) {
             console.error("로그인 오류:", err);
