@@ -2,6 +2,7 @@
 
 import React, { forwardRef } from "react";
 import Image from "next/image";
+import MarkdownRenderer from "./MarkdownRenderer";
 import pencil2 from "@/components/image/pencli2.svg";
 import trash from "@/components/image/trash.svg";
 
@@ -63,7 +64,7 @@ const AnnotationCard = forwardRef<HTMLTextAreaElement, AnnotationCardProps>(
         </div>
 
         {/* 본문 */}
-        <div className="flex flex-col gap-1 mb-3 text-black text-sm whitespace-pre-wrap leading-snug">
+        <div className="flex flex-col gap-1 mb-3 text-black text-sm leading-snug">
           {isEditing ? (
             <textarea
               ref={ref} // ✅ 부모에서 넘긴 ref 연결
@@ -81,7 +82,10 @@ const AnnotationCard = forwardRef<HTMLTextAreaElement, AnnotationCardProps>(
               className="w-full bg-white border border-gray-300 p-2 text-sm rounded resize-none"
             />
           ) : (
-            <div>{content.join("\n")}</div>
+            <MarkdownRenderer
+              markdown={content.join("\n")}
+              className="[&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5"
+            />
           )}
         </div>
 

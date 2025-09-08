@@ -38,9 +38,9 @@ export default function GoogleCallbackPage() {
           auth.setTokens(response.result);
           setStatus('success');
           
-          // 대시보드로 리다이렉트
+          // 대시보드로 리다이렉트 (새로고침 포함)
           setTimeout(() => {
-            router.push('/dashboard');
+            window.location.href = '/dashboard';
           }, 1000);
         }
       } catch (error: any) {
@@ -55,18 +55,11 @@ export default function GoogleCallbackPage() {
         
         if (error.code === 'USER_NOT_FOUND') {
           // 회원가입이 필요한 경우
-          // 백엔드에서 SocialInfoRes를 반환했을 것으로 예상
           // 실제로는 에러 응답에서 result를 파싱해야 함
           const socialInfo = error.result as SocialInfoRes;
           
           // 회원가입 페이지로 이동
-          router.push({
-            pathname: '/signup',
-            query: { 
-              socialInfo: JSON.stringify(socialInfo),
-              socialType: 'google'
-            }
-          });
+          router.push(`/signup?socialInfo=${encodeURIComponent(JSON.stringify(socialInfo))}&socialType=google`);
         } else {
           setError(error.message || '로그인 중 오류가 발생했습니다.');
           setStatus('error');

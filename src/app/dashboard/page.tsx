@@ -1,175 +1,283 @@
-'use client'; // 🚨 꼭 맨 위에 선언!
+'use client';
 
-import type { NextPage } from 'next';
-import Image from "next/image";
-import styles from './index.module.css';
-import { useRouter } from 'next/navigation'; // ✅ App Router용
-import Sidebar from "@/components/Sidebar"; // 실제 경로에 맞게 조정
-import { useAuth } from "@/components/AuthContext";
-import UserProfile from "@/components/UserProfile";
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/AuthContext';
+import Sidebar from '@/components/Sidebar';
+import Image from 'next/image';
+import { Search } from 'lucide-react';
 
-const Component1: NextPage = () => {
-  const router = useRouter(); // ⬅️ 사용 준비
-  const { user, signIn, signOut, isAuthenticated } = useAuth();
-  
-  const goToHome = () => {
-    router.push("/home");
+export default function DashboardPage() {
+  const router = useRouter();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/');
   };
-  
-  const handleAuthAction = () => {
-    if (isAuthenticated) {
-      signOut();
-    } else {
-      router.push("/auth/signin");
-    }
+
+  const handleStartLecture = () => {
+    router.push('/home');
   };
-  	return (
-    		<div className={styles.div}>
-      			<div className={styles.body}>
-        				<div className={styles.div1}>
-          					<div className={styles.main}>
-            						<div className={styles.section}>
-              							<div className={styles.div2}>학습 통계</div>
-              							<div className={styles.div3}>
-                								<div className={styles.div4}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div6}>
-                      											<div className={styles.div7}>누적 수업 수</div>
-                      											<b className={styles.b}>24</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/1.png" />
-                  									</div>
-                								</div>
-                								<div className={styles.div8}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div6}>
-                      											<div className={styles.div7}>총 생성 주석</div>
-                      											<b className={styles.b1}>1,247</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/2.png" />
-                  									</div>
-                								</div>
-                								<div className={styles.div12}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div6}>
-                      											<div className={styles.div7}>이번 주 활동</div>
-                      											<b className={styles.b2}>8시간</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/3.png" />
-                  									</div>
-                								</div>
-                								<div className={styles.div16}>
-                  									<div className={styles.div5}>
-                    										<div className={styles.div18}>
-                      											<div className={styles.div19}>평균 주석/강의</div>
-                      											<b className={styles.b3}>52</b>
-                    										</div>
-                    										<Image className={styles.divIcon} width={48} height={48} sizes="100vw" alt="" src="/4.png" />
-                  									</div>
-                								</div>
-              							</div>
-            						</div>
-            						<div className={styles.section1}>
-              							<div className={styles.div20}>최근 강의 기록</div>
-              							<div className={styles.div21}>
-                								<div className={styles.div22}>
-                  									<div className={styles.div23}>
-                    										<div className={styles.div24}>
-                      											<div className={styles.div25}>
-                        												<Image className={styles.divChild} width={40} height={40} sizes="100vw" alt="" src="/파일.svg" />
-                        												<div className={styles.div26}>
-                          													<div className={styles.pdf}>데이터베이스_시스템_3장.pdf</div>
-                          													<div className={styles.div27}>생성 주석: 47개 • 2024년 1월 15일</div>
-                        												</div>
-                      											</div>
-                      											<Image className={styles.buttonIcon} width={10} height={24} sizes="100vw" alt="" src="button.svg" />
-                    										</div>
-                    										<div className={styles.div28}>
-                      											<div className={styles.div29}>
-                        												<Image className={styles.divChild} width={40} height={40} sizes="100vw" alt="" src="/파일.svg" />
-                        												<div className={styles.div30}>
-                          													<div className={styles.pdf1}>운영체제_프로세스관리.pdf</div>
-                          													<div className={styles.div27}>생성 주석: 63개 • 2024년 1월 12일</div>
-                        												</div>
-                      											</div>
-                      											<Image className={styles.buttonIcon} width={10} height={24} sizes="100vw" alt="" src="button.svg" />
-                    										</div>
-                    										<div className={styles.div32}>
-                      											<div className={styles.div33}>
-                        												<Image className={styles.divIcon4} width={40} height={40} sizes="100vw" alt="" src="/파일.svg" />
-                        												<div className={styles.div34}>
-                          													<div className={styles.pdf2}>알고리즘_정렬_알고리즘.pdf</div>
-                          													<div className={styles.div35}>생성 주석: 38개 • 2024년 1월 10일</div>
-                        												</div>
-                      											</div>
-                      											<Image className={styles.buttonIcon} width={10} height={24} sizes="100vw" alt="" src="button.svg" />
-                    										</div>
-                  									</div>
-                								</div>
-              							</div>
-            						</div>
-            						<div className={styles.div36}>
-              							<div className={styles.section2}>
-                								<div className={styles.h3}>
-                  									<div className={styles.ai}>AI 서비스 안내</div>
-                								</div>
-                								<div className={styles.div37}>
-                  									<div className={styles.divParent}>
-                    										<div className={styles.div38}>
-                      											<Image className={styles.divIcon5} width={24} height={24} sizes="100vw" alt="" src="/7.png" />
-                      											<div className={styles.div39}>실시간 음성 인식으로 강의 내용을 자동 분석합니다</div>
-                    										</div>
-                    										<div className={styles.div40}>
-                      											<Image className={styles.divIcon5} width={24} height={24} sizes="100vw" alt="" src="/8.png" />
-                      											<div className={styles.div41}>강의자료 기반 맞춤형 주석을 생성합니다</div>
-                    										</div>
-                    										<div className={styles.div42}>
-                      											<Image className={styles.divIcon5} width={24} height={24} sizes="100vw" alt="" src="/9.png" />
-                      											<div className={styles.div43}>드래그앤드롭으로 주석 위치를 자유롭게 조정하세요</div>
-                    										</div>
-                  									</div>
-                								</div>
-              							</div>
-              							<div className={styles.section3}>
-                								<div className={styles.h3}>
-                  									<div className={styles.div44}>피드백</div>
-                								</div>
-                								<div className={styles.textarea}>
-                  									<div className={styles.div45}>서비스 개선을 위한 의견을 남겨주세요...</div>
-                								</div>
-                								<div className={styles.button}>
-                  									<div className={styles.div46}>피드백 보내기</div>
-                								</div>
-              							</div>
-            						</div>
-          					</div>
-          					<div className={styles.header}>
-            						<div className={styles.div47}>
-              							<div className={styles.div48}>
-                								<b className={styles.speakNote}>Speak Note</b>
-              							</div>
-              							<div className={styles.div49} />
-                                          <div className={styles.buttonWrapper}>
-          <div className={styles.button1} onClick={goToHome} style={{ cursor: "pointer" }}>
-            <div className={styles.div50}>강의 시작하기</div>
+
+  // promotionalCards에서 사용한 색 팔레트와 매칭되는 배지 스타일
+  const folderBadgeStyles = [
+    'bg-blue-50 text-blue-600',
+    'bg-purple-50 text-purple-600',
+    'bg-amber-50 text-amber-600',
+  ];
+
+  const promotionalCards = [
+    {
+      title: "실시간 STT로 강의를 놓치지 마세요",
+      description: "말하는 속도를 따라가는 실시간 음성인식",
+      icon: "/dashboard/microphone.png",
+      bgColor: "bg-blue-50",
+      iconColor: "text-blue-600",
+    },
+    {
+      title: "AI 요약으로 핵심만 빠르게 파악하세요",
+      description: "GPT 기반 자동 요약과 주석 생성",
+      icon: "/dashboard/AI-sparkle.png",
+      bgColor: "bg-purple-50",
+      iconColor: "text-purple-600",
+    },
+    {
+      title: "모르는 개념은 AI가 자동으로 설명해드려요",
+      description: "RAG 기반 실시간 개념 보강 시스템",
+      icon: "/dashboard/hand-wave.png",
+      bgColor: "bg-amber-50",
+      iconColor: "text-amber-600",
+    },
+  ];
+
+  const lectureSessions = [
+    {
+      title: "데이터베이스 설계 원리",
+      preview: "정규화의 개념과 1NF, 2NF, 3NF의 차이점에 대해 설명합니다. 관계형 데이터베이스에서 중복을 제거하고...",
+      date: "3.27 목 오후 5:48",
+      folder: "데이터베이스",
+      icon: "notebook.png",
+    },
+    {
+      title: "머신러닝 기초 이론",
+      preview: "지도학습과 비지도학습의 차이점을 알아보고, 선형회귀와 로지스틱 회귀의 수학적 원리를 다룹니다...",
+      date: "3.27 목 오후 3:35",
+      folder: "AI/머신러닝",
+      icon: "bookmark.png",
+    },
+    {
+      title: "웹 개발 프레임워크 비교",
+      preview: "React, Vue, Angular의 특징과 장단점을 비교분석하고, 프로젝트 상황에 맞는 선택 기준을 제시합니다...",
+      date: "3.25 월 오후 5:48",
+      folder: "웹 개발",
+      icon: "folder.png",
+    },
+    {
+      title: "알고리즘 복잡도 분석",
+      preview: "시간복잡도와 공간복잡도의 개념을 이해하고, Big O 표기법을 활용한 알고리즘 성능 분석 방법을...",
+      date: "3.25 월 오후 2:36",
+      folder: "알고리즘",
+      icon: "meno.png",
+    },
+    {
+      title: "네트워크 프로토콜 심화",
+      preview: "TCP/IP 프로토콜 스택의 각 계층별 역할과 HTTP/HTTPS의 동작 원리, 보안 메커니즘에 대해...",
+      date: "3.20 목 오후 5:49",
+      folder: "네트워크",
+      icon: "spring-note.png",
+    },
+    {
+      title: "클라우드 컴퓨팅 개론",
+      preview: "IaaS, PaaS, SaaS의 차이점과 AWS, Azure, GCP의 주요 서비스들을 비교하며 클라우드 아키텍처...",
+      date: "3.20 목 오후 2:35",
+      folder: "클라우드",
+      icon: "stick-memo.png",
+    },
+  ];
+
+  const usefulFeatures = [
+    { title: "실시간 음성인식 (STT)", icon: "🔊" },
+    { title: "AI 자동 요약 생성", icon: "📄" },
+    { title: "개념 자동 보강 설명", icon: "📚" },
+    { title: "PDF 슬라이드 연동", icon: "🎵" },
+    { title: "세션별 복습 기능", icon: "▶️" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex min-h-screen">
+        {/* 사이드바 */}
+        <Sidebar />
+
+        {/* 메인 컨텐츠 */}
+        <main className="flex-1">
+          <header className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <h1 className="text-xl font-bold text-gray-900">강의 관리</h1>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span>홈</span>
+                  <span>/</span>
+                  <span>대시보드</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="강의 검색"
+                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#A8C7FA]"
+                  />
+                </div>
+                <button 
+                  onClick={handleStartLecture}
+                  className="bg-[#A8C7FA] hover:bg-[#8bb3f7] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"
+                >
+                  강의 녹음 시작
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <div className="p-6">
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              {promotionalCards.map((card, index) => (
+                <div key={index} className={`${card.bgColor} border-0 p-6 rounded-lg relative overflow-hidden shadow-sm`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm leading-tight">{card.title}</h3>
+                      <p className="text-xs text-gray-600">{card.description}</p>
+                    </div>
+                    <div>
+                      <Image
+                        src={card.icon}
+                        alt="카드 아이콘"
+                        width={42}
+                        height={42}
+                        className="w-[42px] h-[42px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mb-6 px-1">
+              <h3 className="font-semibold text-gray-900">
+                최근 강의
+              </h3>
+            </div>
+
+            <div className="space-y-0 bg-white rounded-lg border border-gray-200 shadow-sm">
+              {lectureSessions.map((session, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-3 px-4 py-5 border-b border-gray-100 last:border-b-0 hover:bg-[#A8C7FA]/10"
+                >
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-1 overflow-hidden">
+                    <Image
+                      src={`/file/${session.icon}`}
+                      alt="강의 아이콘"
+                      width={24}
+                      height={24}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h3 className="font-medium text-gray-900 text-sm">
+                        {session.title}
+                      </h3>
+                      <span className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${folderBadgeStyles[index % 3]}`}>
+                        {session.folder}
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <p className="text-sm text-gray-600 line-clamp-2 pr-24">{session.preview}</p>
+                      <span className="absolute bottom-0 right-0 text-xs text-gray-500">{session.date}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          {isAuthenticated && user && (
-            <div style={{ marginLeft: "10px" }}>
-              <UserProfile />
-            </div>
-          )}
-          {!isAuthenticated && (
-            <div className={styles.button1} onClick={handleAuthAction} style={{ cursor: "pointer", marginLeft: "10px" }}>
-              <div className={styles.div50}>로그인</div>
-            </div>
-          )}
-        </div>
-            						</div>
-          					</div>
-                              <Sidebar />
-        				</div>
-      			</div>
-    		</div>);
-};
+        </main>
 
-export default Component1;
+        {/* 오른쪽 패널 */}
+        <div className="w-80 bg-white border-l border-gray-200 p-6">
+          <div className="space-y-6">
+            {/* Calendar */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-gray-900">2025.9</h2>
+                <div className="flex items-center gap-2">
+                  <button className="p-1 text-[#A8C7FA] hover:bg-[#A8C7FA]/10 rounded">
+                    <span className="text-sm">‹</span>
+                  </button>
+                  <button className="p-1 text-[#A8C7FA] hover:bg-[#A8C7FA]/10 rounded">
+                    <span className="text-sm">›</span>
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 mb-2">
+                <div>일</div>
+                <div>월</div>
+                <div>화</div>
+                <div>수</div>
+                <div>목</div>
+                <div>금</div>
+                <div>토</div>
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-sm">
+                {Array.from({ length: 35 }, (_, i) => {
+                  const day = i - 6 + 1;
+                  const isCurrentMonth = day > 0 && day <= 30;
+                  const isToday = day === 7;
+                  return (
+                    <div
+                      key={i}
+                      className={`h-8 flex items-center justify-center rounded ${
+                        isToday
+                          ? "bg-[#A8C7FA] text-white"
+                          : isCurrentMonth
+                            ? "text-gray-900 hover:bg-[#A8C7FA]/10"
+                            : "text-gray-300"
+                      }`}
+                    >
+                      {isCurrentMonth ? day : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">Speak Note 핵심 기능</h3>
+              <div className="space-y-3">
+                {usefulFeatures.map((feature, index) => (
+                  <div key={index} className="flex items-center gap-3 text-sm text-gray-600">
+                    <span className="text-[#A8C7FA]">{feature.icon}</span>
+                    <span>{feature.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-6">
+              <div className="bg-gradient-to-br from-[#A8C7FA]/10 to-[#A8C7FA]/5 rounded-lg p-4 text-center border border-[#A8C7FA]/20">
+                <div className="text-sm text-gray-600 mb-2">새로운 강의</div>
+                <div className="text-sm text-gray-600">녹음하는 방법</div>
+                <div className="mt-3">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[#A8C7FA]/20 to-[#A8C7FA]/10 rounded-lg mx-auto flex items-center justify-center">
+                    <span className="text-2xl text-[#A8C7FA]">🎤</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
