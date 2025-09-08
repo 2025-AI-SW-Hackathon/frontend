@@ -148,6 +148,7 @@ export default function PDFViewer({
   .map((item) => (
     <AnnotationItem
       key={item.id}
+      data-ann-id={item.id}
       item={item}
       dropped={dropped}
       setDropped={setDropped}

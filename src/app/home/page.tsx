@@ -248,8 +248,20 @@ export default function Home() {
   }
 
   // PDF 내보내기 (히스토리/업로드 공통)
+  function toLines(text?: string) {
+    if (!text) return [""];
+    try {
+      const parsed = JSON.parse(text);
+      const lines =
+        parsed?.lines ??
+        (parsed?.refinedText ? String(parsed.refinedText).split("\n") : null);
+      return lines ?? [String(text)];
+    } catch {
+      return [String(text)];
+    }
+  }
+  
   async function handleSaveWithAnnotations() {
-    // ⬇️ 원본 바이트 캐시 우선 사용
     const existingPdfBytes =
       originalPdfBytes ??
       (pdfFile
@@ -257,66 +269,100 @@ export default function Home() {
         : pdfUrl
         ? await fetch(pdfUrl).then((r) => r.arrayBuffer()).catch(() => null)
         : null);
-
+  
     if (!existingPdfBytes) {
       alert("PDF 원본이 없습니다. 업로드 또는 히스토리로 파일을 먼저 로드하세요.");
       return;
     }
-
+  
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
     pdfDoc.registerFontkit(fontkit);
-
-    // 폰트는 선택
+  
+    // 폰트: 실패해도 진행
+    let customFont: any = undefined;
     try {
       const fontBytes = await fetch("/fonts/MaruBuri-Bold.ttf").then((res) => res.arrayBuffer());
-      await pdfDoc.embedFont(fontBytes);
+      customFont = await pdfDoc.embedFont(fontBytes);
     } catch {}
-
+  
     const pages = pdfDoc.getPages();
-
+  
     for (const annotation of dropped) {
       const page = pages[annotation.pageNumber - 1];
       const rendered = renderedSizes[annotation.pageNumber];
       if (!rendered) continue;
-
+  
       const pageWidth = page.getWidth();
       const pageHeight = page.getHeight();
+  
       const scaledX = (annotation.x / rendered.width) * pageWidth;
       const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
-
-      // 카드 DOM을 이미지로 캡처해서 삽입 (간단 버전)
-      const cardElement = document.querySelector(`[data-ann-id="${annotation.id}"]`) as HTMLElement | null;
-      if (!cardElement) continue;
-
-      const canvas = await html2canvas(cardElement, {
-        backgroundColor: null,
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
-
-      const dataUrl = canvas.toDataURL("image/png", 1.0);
-      const png = await pdfDoc.embedPng(dataUrl);
-
-      const actualCardWidth = canvas.width / 3;
-      const actualCardHeight = canvas.height / 3;
-
-      const scaledWidth = (actualCardWidth / rendered.width) * pageWidth * 0.5;
-      const scaledHeight = (actualCardHeight / rendered.height) * pageHeight * 0.5;
-
-      page.drawImage(png, {
-        x: scaledX,
-        y: scaledY - scaledHeight,
-        width: scaledWidth,
-        height: scaledHeight,
-      });
-    }
-
+      const scaledMaxWidth = ((annotation.width ?? 180) / rendered.width) * pageWidth;
+  
+      const textColor =
+        annotation.answerState === 0
+          ? rgb(1, 0, 0)
+          : annotation.answerState === 2
+          ? rgb(0.2, 0.4, 0.9)
+          : rgb(1, 0.6, 0);
+  
+      // 1) 카드 DOM 캡처
+      const cardElement = document.querySelector(
+        `[data-ann-id="${annotation.id}"]`
+      ) as HTMLElement | null;
+  
+      if (cardElement) {
+        try {
+          const canvas = await html2canvas(cardElement, {
+            backgroundColor: null,
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+          });
+  
+          const dataUrl = canvas.toDataURL("image/png", 1.0);
+          const png = await pdfDoc.embedPng(dataUrl);
+  
+          const actualCardWidth = canvas.width / 3;
+          const actualCardHeight = canvas.height / 3;
+  
+          const scaledWidth = (actualCardWidth / rendered.width) * pageWidth * 0.5;
+          const scaledHeight = (actualCardHeight / rendered.height) * pageHeight * 0.5;
+  
+          page.drawImage(png, {
+            x: scaledX,
+            y: scaledY - scaledHeight,
+            width: scaledWidth,
+            height: scaledHeight,
+          });
+  
+          continue; // 성공했으면 다음 주석으로
+        } catch (err) {
+          console.warn("DOM 캡처 실패. 텍스트 폴백으로 그립니다.", err);
+        }
+      }
+  
+      // 2) 폴백: 텍스트 직접 그리기
+      const linesArr = toLines(annotation.text);
+      for (let i = 0; i < linesArr.length; i++) {
+        const ln = String(linesArr[i] ?? "");
+        page.drawText(ln, {
+          x: scaledX,
+          y: scaledY - i * 12,
+          size: 12,
+          font: customFont,             // undefined면 기본 폰트 사용
+          color: textColor,
+          maxWidth: scaledMaxWidth,
+        });
+      }
+    } // <-- for-of 끝
+  
     const outBytes = await pdfDoc.save();
     const blob = new Blob([outBytes], { type: "application/pdf" });
     saveAs(blob, "annotated.pdf");
   }
+  
 
   // 스냅샷 저장
   async function handleSaveAllAnnotations() {
