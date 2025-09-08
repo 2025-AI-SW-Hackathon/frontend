@@ -5,10 +5,10 @@ import Header from "@/components/Header";
 import UploadArea from "@/components/UploadArea";
 import PDFViewer from "@/components/PDFViewer";
 import RightPanel from "@/components/RightPanel";
-import { useRef, useState ,useEffect} from "react";
+import { useState ,useEffect} from "react";
 import { DroppedAnnotation } from "@/components/types";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument } from "pdf-lib";
+import html2canvas from "html2canvas";
 import { saveAs } from "file-saver";
 
 export default function Home() {
@@ -163,12 +163,10 @@ function buildSlidesPayload(
 
     const existingPdfBytes = await pdfFile.arrayBuffer();
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-    pdfDoc.registerFontkit(fontkit);
-    const fontBytes = await fetch("/fonts/MaruBuri-Bold.ttf").then((res) => res.arrayBuffer());
-    const customFont = await pdfDoc.embedFont(fontBytes);
-    const scaledMaxWidth = (annotation.width / rendered.width) * pageWidth;
 
     const pages = pdfDoc.getPages();
+    
+    // 각 주석을 개별적으로 캡처 (내용 크기에 맞게)
     for (const annotation of dropped) {
       const page = pages[annotation.pageNumber - 1];
       const rendered = renderedSizes[annotation.pageNumber];
@@ -178,34 +176,110 @@ function buildSlidesPayload(
       const pageHeight = page.getHeight();
       const scaledX = (annotation.x / rendered.width) * pageWidth;
       const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
-      const textColor =
-        annotation.answerState === 0
-          ? rgb(1, 0, 0)
-          : annotation.answerState === 2
-          ? rgb(0.2, 0.4, 0.9)
-          : rgb(1, 0.6, 0);
+      
+      // 주석 카드의 실제 내용 영역만 찾기
+      const cardElement = document.querySelector(`[data-ann-id="${annotation.id}"]`) as HTMLElement;
+      if (!cardElement) {
+        console.warn(`Card element not found for annotation ${annotation.id}`);
+        continue;
+      }
+
+      // 전체 카드 요소를 그대로 캡처
+      console.log(`Capturing entire card for annotation ${annotation.id}`);
+      console.log(`Card element:`, cardElement);
+
+      // PDF 캡처를 위해 임시로 라벨 위치 조정
+      console.log('Card HTML:', cardElement.outerHTML);
+      
+      const originalStyles: { element: HTMLElement; transform: string; marginTop: string }[] = [];
 
       try {
-        const parsed = JSON.parse(annotation.text);
-        const lines = parsed.lines ?? parsed.refinedText?.split("\n") ?? [parsed.refinedText];
-        lines.forEach((line: string, i: number) => {
-          page.drawText(line, {
-            x: scaledX,
-            y: scaledY - i * 12,
-            size: 12,
-            font: customFont,
-            color: textColor,
-            maxWidth: scaledMaxWidth
-                    });
+        
+        // 텍스트가 들어있는 span 요소를 직접 찾기
+        const textSpans = cardElement.querySelectorAll('span');
+        textSpans.forEach((span) => {
+          const spanEl = span as HTMLElement;
+          // 라벨 텍스트가 포함된 span 찾기
+          const hasLabelText = spanEl.textContent?.includes('외부 검색') || 
+                              spanEl.textContent?.includes('음성') || 
+                              spanEl.textContent?.includes('자료 기반');
+          
+          if (hasLabelText) {
+            console.log('Found label span:', spanEl.className, spanEl.textContent);
+            const currentTransform = spanEl.style.transform || '';
+            const currentMarginTop = spanEl.style.marginTop || '';
+            originalStyles.push({ element: spanEl, transform: currentTransform, marginTop: currentMarginTop });
+            
+            // 텍스트만 위로 이동
+            spanEl.style.transform = 'translateY(-6px)';
+            spanEl.style.display = 'inline-block'; // transform이 적용되도록
+          }
         });
-      } catch {
-        page.drawText(annotation.text, {
+        
+        // 전체 카드를 고품질로 캡처
+        const canvas = await html2canvas(cardElement, {
+          backgroundColor: null, // 투명 배경 (카드 자체 배경색 사용)
+          scale: 3, // 더 고해상도로 캡처
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          removeContainer: true,
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          scrollX: 0,
+          scrollY: 0,
+          x: 0,
+          y: 0,
+          width: cardElement.offsetWidth,
+          height: cardElement.offsetHeight,
+        });
+
+        const dataUrl = canvas.toDataURL("image/png", 1.0);
+        const png = await pdfDoc.embedPng(dataUrl);
+
+        // 실제 캡처된 캔버스 크기 기준으로 스케일링
+        const capturedWidth = canvas.width;
+        const capturedHeight = canvas.height;
+        
+        console.log(`Canvas size: ${capturedWidth}x${capturedHeight}, PNG size: ${png.width}x${png.height}`);
+        
+        // 고해상도 캡처 보정: scale 3으로 캡처했으므로 1/3로 보정하여 원본 크기로 만든 후 0.5배 축소
+        const actualCardWidth = capturedWidth / 3; // scale 3 보정
+        const actualCardHeight = capturedHeight / 3; // scale 3 보정
+        
+        const scaledWidth = (actualCardWidth / rendered.width) * pageWidth * 0.5;
+        const scaledHeight = (actualCardHeight / rendered.height) * pageHeight * 0.5;
+
+        page.drawImage(png, {
           x: scaledX,
-          y: scaledY,
-          size: 12,
-          font: customFont,
-          color: textColor,
+          y: scaledY - scaledHeight,
+          width: scaledWidth,
+          height: scaledHeight,
         });
+
+        // 원래 스타일로 복원
+        originalStyles.forEach(({ element, transform, marginTop }) => {
+          element.style.transform = transform;
+          element.style.marginTop = marginTop;
+          if (element.tagName === 'SPAN' && !transform) {
+            element.style.display = ''; // display도 원래대로
+          }
+        });
+
+        console.log(`Annotation ${annotation.id} captured successfully - Size: ${scaledWidth}x${scaledHeight}`);
+      } catch (error) {
+        console.error(`Annotation capture error for ${annotation.id}:`, error);
+        
+        // 에러 발생 시에도 스타일 복원
+        try {
+          originalStyles.forEach(({ element, transform, marginTop }) => {
+            element.style.transform = transform;
+            element.style.marginTop = marginTop;
+            if (element.tagName === 'SPAN' && !transform) {
+              element.style.display = '';
+            }
+          });
+        } catch {}
       }
     }
 
