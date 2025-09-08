@@ -166,7 +166,11 @@ export default function AnnotationItem({ item, dropped, setDropped }: Props) {
       cancel='[data-non-draggable="true"]'
       disableDragging={isEditing}
     >
-      <div className="w-full h-full overflow-hidden" ref={containerRef}>
+      <div
+        className="w-full h-full overflow-hidden"
+        ref={containerRef}
+        data-ann-id={item.id}
+      >
         {getCardComponent()}
       </div>
     </Rnd>

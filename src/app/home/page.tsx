@@ -5,10 +5,10 @@ import Header from "@/components/Header";
 import UploadArea from "@/components/UploadArea";
 import PDFViewer from "@/components/PDFViewer";
 import RightPanel from "@/components/RightPanel";
-import { useRef, useState ,useEffect} from "react";
+import { useState ,useEffect} from "react";
 import { DroppedAnnotation } from "@/components/types";
-import { PDFDocument, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument } from "pdf-lib";
+import html2canvas from "html2canvas";
 import { saveAs } from "file-saver";
 
 export default function Home() {
@@ -19,30 +19,6 @@ export default function Home() {
   const [containerWidth, setContainerWidth] = useState<number>(600);
   const [isPdfReady, setIsPdfReady] = useState(false);
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  // 마크다운을 PDF 텍스트로 변환하는 함수
-  function parseMarkdownToText(markdown: string): string[] {
-    // 간단한 마크다운 파싱
-    let text = markdown
-      // 코드 블록 제거 (```로 감싸진 부분)
-      .replace(/```[\s\S]*?```/g, '')
-      // 인라인 코드 제거 (`로 감싸진 부분)
-      .replace(/`[^`]*`/g, '')
-      // 볼드 제거 (**로 감싸진 부분)
-      .replace(/\*\*([^*]+)\*\*/g, '$1')
-      // 이탤릭 제거 (*로 감싸진 부분)
-      .replace(/\*([^*]+)\*/g, '$1')
-      // 링크 제거 ([텍스트](URL) 형태)
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-      // 헤더 제거 (#으로 시작하는 부분)
-      .replace(/^#+\s*/gm, '')
-      // 리스트 아이템 제거 (- 또는 *로 시작하는 부분)
-      .replace(/^[\s]*[-*]\s*/gm, '• ')
-      // 빈 줄 정리
-      .replace(/\n\s*\n/g, '\n');
-    
-    return text.split('\n').filter(line => line.trim());
-  }
 
   type RenderedSizes = Record<number, { width: number; height: number }>;
 
@@ -187,112 +163,123 @@ function buildSlidesPayload(
 
     const existingPdfBytes = await pdfFile.arrayBuffer();
     const pdfDoc = await PDFDocument.load(existingPdfBytes);
-    pdfDoc.registerFontkit(fontkit);
-    const fontBytes = await fetch("/fonts/Pretendard-Regular.ttf").then((res) => res.arrayBuffer());
-    const customFont = await pdfDoc.embedFont(fontBytes);
 
     const pages = pdfDoc.getPages();
+    
+    // 각 주석을 개별적으로 캡처 (내용 크기에 맞게)
     for (const annotation of dropped) {
       const page = pages[annotation.pageNumber - 1];
       const rendered = renderedSizes[annotation.pageNumber];
       if (!rendered) continue;
-      
-      // 디버깅: annotation 크기 정보 확인
-      console.log('Annotation size:', {
-        width: annotation.width,
-        height: annotation.height,
-        x: annotation.x,
-        y: annotation.y
-      });
 
       const pageWidth = page.getWidth();
       const pageHeight = page.getHeight();
       const scaledX = (annotation.x / rendered.width) * pageWidth;
       const scaledY = pageHeight - (annotation.y / rendered.height) * pageHeight;
       
-      // 웹 UI에서 설정된 실제 크기를 PDF에 그대로 반영
-      // 픽셀을 포인트로 변환 (실험해보고 0.5로 결정함)
-      const pixelToPointRatio = 0.5;
-      const scaledWidth = ((annotation.width ?? 300) / rendered.width) * pageWidth * pixelToPointRatio;
-      const scaledHeight = ((annotation.height ?? 150) / rendered.height) * pageHeight * pixelToPointRatio;
+      // 주석 카드의 실제 내용 영역만 찾기
+      const cardElement = document.querySelector(`[data-ann-id="${annotation.id}"]`) as HTMLElement;
+      if (!cardElement) {
+        console.warn(`Card element not found for annotation ${annotation.id}`);
+        continue;
+      }
+
+      // 전체 카드 요소를 그대로 캡처
+      console.log(`Capturing entire card for annotation ${annotation.id}`);
+      console.log(`Card element:`, cardElement);
+
+      // PDF 캡처를 위해 임시로 라벨 위치 조정
+      console.log('Card HTML:', cardElement.outerHTML);
       
-      // 주석 종류에 따른 배경색 설정
-      const textColor = rgb(0, 0, 0); // 텍스트는 검은색
-      const backgroundColor = 
-        annotation.answerState === 2
-          ? rgb(0.937, 0.937, 0.937) // bg-gray-200 (음성 - QuestionAnnotationCard)
-          : annotation.answerState === 0
-          ? rgb(0.996, 0.925, 0.918) // #FEECEA (질문 - AnnotationCard)
-          : rgb(0.937, 0.969, 1); // #EFF6FF (자료 기반 - ExternalAnnotationCard)
-      const borderColor = rgb(0.8, 0.8, 0.8); // border-gray-200
+      const originalStyles: { element: HTMLElement; transform: string; marginTop: string }[] = [];
 
       try {
-        const parsed = JSON.parse(annotation.text);
-        const refinedText = parsed.refinedText || annotation.text;
-        // 마크다운을 텍스트로 변환
-        const lines = parseMarkdownToText(refinedText);
         
-        if (lines.length > 0) {
-          // 웹 UI 크기를 그대로 사용
-          const padding = 12;
-          const fontSize = 12;
-          const lineHeight = fontSize * 1.2;
+        // 텍스트가 들어있는 span 요소를 직접 찾기
+        const textSpans = cardElement.querySelectorAll('span');
+        textSpans.forEach((span) => {
+          const spanEl = span as HTMLElement;
+          // 라벨 텍스트가 포함된 span 찾기
+          const hasLabelText = spanEl.textContent?.includes('외부 검색') || 
+                              spanEl.textContent?.includes('음성') || 
+                              spanEl.textContent?.includes('자료 기반');
           
-          // 웹에서 설정된 크기로 배경 그리기
-          page.drawRectangle({
-            x: scaledX,
-            y: scaledY - scaledHeight,
-            width: scaledWidth,
-            height: scaledHeight,
-            color: backgroundColor,
-            borderColor: borderColor,
-            borderWidth: 1,
-          });
-          
-          // 텍스트 그리기 (웹 UI 크기 내에서)
-          lines.forEach((line: string, i: number) => {
-            page.drawText(line, {
-              x: scaledX + padding,
-              y: scaledY - padding - (i + 1) * lineHeight,
-              size: fontSize,
-              ...(customFont && { font: customFont }),
-              color: textColor,
-              maxWidth: scaledWidth - padding * 2
-            });
-          });
-        }
-      } catch {
-        // JSON 파싱 실패 시 원본 텍스트 사용
-        const lines = parseMarkdownToText(annotation.text);
+          if (hasLabelText) {
+            console.log('Found label span:', spanEl.className, spanEl.textContent);
+            const currentTransform = spanEl.style.transform || '';
+            const currentMarginTop = spanEl.style.marginTop || '';
+            originalStyles.push({ element: spanEl, transform: currentTransform, marginTop: currentMarginTop });
+            
+            // 텍스트만 위로 이동
+            spanEl.style.transform = 'translateY(-6px)';
+            spanEl.style.display = 'inline-block'; // transform이 적용되도록
+          }
+        });
         
-        if (lines.length > 0) {
-          const padding = 12;
-          const fontSize = 12;
-          const lineHeight = fontSize * 1.2;
-          
-          // 웹에서 설정된 크기로 배경 그리기
-          page.drawRectangle({
-            x: scaledX,
-            y: scaledY - scaledHeight,
-            width: scaledWidth,
-            height: scaledHeight,
-            color: backgroundColor,
-            borderColor: borderColor,
-            borderWidth: 1,
+        // 전체 카드를 고품질로 캡처
+        const canvas = await html2canvas(cardElement, {
+          backgroundColor: null, // 투명 배경 (카드 자체 배경색 사용)
+          scale: 3, // 더 고해상도로 캡처
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          removeContainer: true,
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          scrollX: 0,
+          scrollY: 0,
+          x: 0,
+          y: 0,
+          width: cardElement.offsetWidth,
+          height: cardElement.offsetHeight,
+        });
+
+        const dataUrl = canvas.toDataURL("image/png", 1.0);
+        const png = await pdfDoc.embedPng(dataUrl);
+
+        // 실제 캡처된 캔버스 크기 기준으로 스케일링
+        const capturedWidth = canvas.width;
+        const capturedHeight = canvas.height;
+        
+        console.log(`Canvas size: ${capturedWidth}x${capturedHeight}, PNG size: ${png.width}x${png.height}`);
+        
+        // 고해상도 캡처 보정: scale 3으로 캡처했으므로 1/3로 보정하여 원본 크기로 만든 후 0.5배 축소
+        const actualCardWidth = capturedWidth / 3; // scale 3 보정
+        const actualCardHeight = capturedHeight / 3; // scale 3 보정
+        
+        const scaledWidth = (actualCardWidth / rendered.width) * pageWidth * 0.5;
+        const scaledHeight = (actualCardHeight / rendered.height) * pageHeight * 0.5;
+
+        page.drawImage(png, {
+          x: scaledX,
+          y: scaledY - scaledHeight,
+          width: scaledWidth,
+          height: scaledHeight,
+        });
+
+        // 원래 스타일로 복원
+        originalStyles.forEach(({ element, transform, marginTop }) => {
+          element.style.transform = transform;
+          element.style.marginTop = marginTop;
+          if (element.tagName === 'SPAN' && !transform) {
+            element.style.display = ''; // display도 원래대로
+          }
+        });
+
+        console.log(`Annotation ${annotation.id} captured successfully - Size: ${scaledWidth}x${scaledHeight}`);
+      } catch (error) {
+        console.error(`Annotation capture error for ${annotation.id}:`, error);
+        
+        // 에러 발생 시에도 스타일 복원
+        try {
+          originalStyles.forEach(({ element, transform, marginTop }) => {
+            element.style.transform = transform;
+            element.style.marginTop = marginTop;
+            if (element.tagName === 'SPAN' && !transform) {
+              element.style.display = '';
+            }
           });
-          
-          // 텍스트 그리기 (웹 UI 크기 내에서)
-          lines.forEach((line: string, i: number) => {
-            page.drawText(line, {
-              x: scaledX + padding,
-              y: scaledY - padding - (i + 1) * lineHeight,
-              size: fontSize,
-              ...(customFont && { font: customFont }),
-              color: textColor,
-              maxWidth: scaledWidth - padding * 2
-            });
-          });
-        }
+        } catch {}
       }
     }
 
