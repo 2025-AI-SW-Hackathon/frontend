@@ -27,7 +27,7 @@ export default function Home() {
   const [isPdfReady, setIsPdfReady] = useState(false);
   const [versionMeta, setVersionMeta] = useState<{version?: number; latest?: boolean; snapshotCreatedAt?: string}>({});
   type RenderedSizes = Record<number, { width: number; height: number }>;
-
+  const [fileName, setFileName] = useState<string>("");
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
   const { user } = useAuth();
 
@@ -95,6 +95,11 @@ export default function Home() {
         setPdfFile(null);
         setFileId(data.fileId);
         setServerSlides(data.slides || []);
+         if ((data as any).fileName || (data as any).name) {
+             setFileName((data as any).fileName ?? (data as any).name);
+           } else {
+             // 메타에 없으면 필요 시 별도 조회: GET /api/files/:id
+           }
         setVersionMeta({ version: data.version, latest: data.latest, snapshotCreatedAt: data.snapshotCreatedAt });
 
         // 2) 실제 PDF 바이트 수신
@@ -404,8 +409,8 @@ export default function Home() {
     <div className="flex h-screen">
       <Sidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
-      <Header fileId={fileId} fileName={pdfFile?.name ?? ""} />
-        <main className="flex flex-1 h-0">
+      <Header fileId={fileId} fileName={fileName} onFileNameUpdated={setFileName} />
+              <main className="flex flex-1 h-0">
           {!pdfFile && !pdfUrl ? (
             <UploadArea />
           ) : !isPdfReady ? (
@@ -447,6 +452,7 @@ export default function Home() {
             if (file) {
               setIsPdfReady(false);
               // 원본 바이트/상태 먼저 세팅
+              setFileName(file.name);
               const bytes = await file.arrayBuffer();
               setOriginalPdfBytes(bytes);
               setPdfFile(file);

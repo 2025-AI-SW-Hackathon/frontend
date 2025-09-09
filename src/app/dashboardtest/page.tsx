@@ -25,7 +25,7 @@ export default function DashboardTestPage() {
       {/* 1) 하드코딩된 테스트 버튼들 */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         <button
-          onClick={() => goHistory(11)}
+          onClick={() => goHistory(1)}
           style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6 }}
         >
           파일 #11 (최신)
