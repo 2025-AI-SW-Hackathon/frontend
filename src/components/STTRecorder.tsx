@@ -18,6 +18,7 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
   const API_WSS_URL = process.env.NEXT_PUBLIC_API_WSS_URL;
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const demoTimersRef = useRef<NodeJS.Timeout[]>([]);
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -71,11 +72,18 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
         processor.onaudioprocess = (e) => {
           const input = e.inputBuffer.getChannelData(0);
           const pcm = convertFloat32ToInt16(input);
+          
+          // T1: 마이크 입력 시작 시점 기록
+          const chunkId = `chunk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+          console.log(`[T1] Chunk: ${chunkId}, Time: ${Date.now()}`);
+          
           if (ws.readyState === WebSocket.OPEN) {
+            // T2: 세그먼트 전송 시점 기록
+            console.log(`[T2] Chunk: ${chunkId}, Time: ${Date.now()}`);
             ws.send(pcm.buffer);
-            ws.send(JSON.stringify({ type: "init", fileId: fileIdRef.current }));
-
-          }}}
+            ws.send(JSON.stringify({ type: "init", fileId: fileIdRef.current, chunkId: chunkId }));
+          }
+        }}
           catch (err) {
             console.error("로그인 오류:", err);
             alert("로그인을 하셔야 이용 가능합니다.");
@@ -88,10 +96,105 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
         intervalRef.current = setInterval(() => {
           setRecordingTime((prev) => prev + 1);
         }, 1000);
+
+        // ===== 데모 타이머 기반 주석 주입 =====
+        // 공통 헬퍼
+        const add = (payload: any) => {
+          addAnnotation({
+            id: crypto.randomUUID(),
+            text: JSON.stringify(payload),
+            markdown: null,
+            answerState: payload.answerState,
+            pageNumber: payload.pageNumber,
+          });
+          window.dispatchEvent(new Event("annotation-added"));
+        };
+
+        // 1) 00:20 → 2페이지: 자료기반 + 음성(대본 그대로)
+        demoTimersRef.current.push(setTimeout(() => {
+          add({
+            pageNumber: 2,
+            answerState: 0, // 자료 기반(기본 카드)
+            refinedText: [
+              "- 오늘의 목표: 컨테이너 개념과 Docker의 기본 이해",
+              "- 맥락: 강의 도입부로 주제와 기대 효과 제시",
+            ].join("\n"),
+            voice:
+              "안녕하세요. 오늘은 클라우드 컴퓨팅 수업의 한 부분인 도커 기초에 대해 이야기해 보겠습니다. 요즘 개발자들이 “컨테이너, 컨테이너” 하는데, 이게 뭔지 감이 잘 안 오실 수 있죠. 오늘은 그 기본을 잡아보겠습니다.",
+          });
+        }, 20_000));
+
+        // 2) 01:00 → 3페이지: 자료기반 + 음성(대본 그대로)
+        demoTimersRef.current.push(setTimeout(() => {
+          add({
+            pageNumber: 3,
+            answerState: 0, // 자료 기반
+            refinedText: [
+              "- 분류: 호스트(예: VirtualBox) / 하이퍼바이저(예: VMware, KVM) / 컨테이너(Docker)",
+              "- 핵심 차이: VM=독립 OS 포함(무겁고 격리 강함), 컨테이너=OS 커널 공유(가볍고 빠름)",
+              "- 비유: VM은 ‘방 새로 짓기’, 컨테이너는 ‘같은 집에서 방만 나눠 쓰기’",
+            ].join("\n"),
+            voice: [
+              "우선 저번 시간 내용부터 복습해 봅시다. 가상화 기술에는 세 가지 종류가 있었죠?",
+              "첫번째로, 호스트 가상화가 있었습니다. VirtualBox 같은 거죠.",
+              "두번째로, 하이퍼바이저 가상화도 있었죠. VMware, KVM 같은 전통적인 가상머신 방식입니다.",
+              "마지막으로 컨테이너 가상화인데, 이 부분에 오늘의 주인공 Docker가 속합니다.",
+              "쉽게 말하면, 가상머신은 무거운 “방 한 칸 통째로 새로 짓는” 방식이고, 컨테이너는 “같은 집 안에서 방만 나눠 쓰는” 방식이라고 생각하면 됩니다.",
+            ].join("\n\n"),
+          });
+        }, 60_000));
+
+        // 3) 01:33 → 7페이지: 자료기반 + 음성(대본 그대로)
+        demoTimersRef.current.push(setTimeout(() => {
+          add({
+            pageNumber: 8,
+            answerState: 0, // 자료 기반
+            refinedText: [
+              "- 패키징: 어떤 애플리케이션도 이미지로 묶어 이식성↑",
+              "- 일관 배포: 개발-테스트-운영 환경 차이를 최소화",
+              "- 성능: 게스트 OS가 없어 오버헤드↓, 시작이 빠름",
+            ].join("\n"),
+            voice: [
+              "도커는 컨테이너를 쉽게 사용할 수 있게 만든 오픈소스 플랫폼입니다.",
+              "특징은 다음과 같아요:",
+              "- 어떤 프로그램이든 컨테이너로 패키징 가능하다.",
+              "- 환경 설치 반복이 필요 없다.",
+              "- 게스트 OS가 없으므로 오버헤드가 줄고 빠르다.",
+              "제가 처음 도커를 접했을 때, `docker run hello-world` 명령을 쳤는데 바로 실행되는 걸 보고 “이거 마법 아니야?” 했던 기억이 납니다.",
+            ].join("\n"),
+          });
+        }, 93_000));
+
+        // 4) 02:03 → 6페이지: 음성 주석 (대본 그대로)
+        demoTimersRef.current.push(setTimeout(() => {
+          add({
+            pageNumber: 6,
+            answerState: 1,  // 외부 검색 주석 카드
+            refinedText: [
+              "Podman 요약",
+              "- 데몬 없는 컨테이너 엔진, 루트리스 모드 지원",
+              "- 보안상 이점, 리눅스 배포판 채택 증가",
+              "- Docker 유사 CLI: podman run ...",
+              "- systemd 통합 등 운영 편의",
+            ].join("\n"),
+            voice: [
+              "사실 도커 하나만 있는 게 아닙니다. 컨테이너라는 큰 범주 안에서 여러 기술들이 나왔는데요, 이건 그냥 상식으로 알고 계세요.",
+              "예를 들어 **Podman** 같은 게 있습니다.",
+              "- ‘도커를 대체한다’는 말 많이 들어보셨을 거예요.",
+              "- 거의 도커랑 똑같이 쓰지만, 차이점은 데몬이 없다는 겁니다.",
+              "- 그래서 보안적으로 더 안전하다고 평가되기도 하고, 최근 리눅스 배포판에서는 도커 대신 Podman을 쓰는 경우도 많습니다.",
+            ].join("\n"),
+          });
+        }, 123_000));
       };
 
       ws.onmessage = (event) => {
         const parsed = JSON.parse(event.data);
+        
+        // T5: 프론트 UI에 결과 표시 시점 기록
+        const chunkId = parsed.chunkId || `unknown_${Date.now()}`;
+        console.log(`[T5] Chunk: ${chunkId}, Time: ${Date.now()}`);
+        
         addAnnotation({
           id: crypto.randomUUID(),
           text: event.data,
@@ -117,6 +220,10 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
   };
 
   const stopRecordingInternal = () => {
+    // 데모 타이머 해제
+    demoTimersRef.current.forEach((t) => clearTimeout(t));
+    demoTimersRef.current = [];
+
     processorRef.current?.disconnect();
     sourceRef.current?.disconnect();
     audioContextRef.current?.close();
