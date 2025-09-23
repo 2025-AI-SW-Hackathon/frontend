@@ -6,12 +6,19 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
 import Image from "next/image";
+import { getFolders, createFolder, updateFolderName, deleteFolder, type FolderDto } from '@/lib/api/folders';
+import { fetchHistory } from '@/lib/api/lectures';
+import { useSearchParams } from 'next/navigation';
+
 
 interface SidebarProps {
   className?: string;
 }
 
 export default function Sidebar({ className = "" }: SidebarProps) {
+  const searchParams = useSearchParams();
+  const folderIdParam = searchParams.get('folderId') ?? undefined;
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
   const [showCollapseButton, setShowCollapseButton] = useState(false);
@@ -19,12 +26,46 @@ export default function Sidebar({ className = "" }: SidebarProps) {
   const [guestAvatar, setGuestAvatar] = useState<string>("");
   const [isCreatingFolder, setIsCreatingFolder] = useState<boolean>(false);
   const [newFolderName, setNewFolderName] = useState<string>("새로운 폴더");
-  const [hoveredFolder, setHoveredFolder] = useState<string | null>(null);
-  const [showContextMenu, setShowContextMenu] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut, isAuthenticated, loading, setUserFromTokens } = useAuth();
+  const [menuId, setMenuId] = useState<number | null>(null);       // 컨텍스트 메뉴 (숫자 id 하나만)
 
+  const [hoveredFolder, setHoveredFolder] = useState<number | null>(null);
+
+  const [folders, setFolders] = useState<FolderDto[]>([]);
+  const [foldersLoading, setFoldersLoading] = useState(false);
+  const [foldersError, setFoldersError] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState<string>('');
+
+
+  const [histLoading, setHistLoading] = useState(false);
+  const [histError, setHistError] = useState<string | null>(null);
+  const [items, setItems] = useState<LectureHistoryItem[]>([]);
+
+
+  type LectureHistoryItem = {
+    lectureId: number;
+    lectureName: string;
+    summary: string;
+    tags: string[];
+    language: string;
+    startedAt: string;
+    endedAt: string;
+    updatedAt: string;
+    status: 'ACTIVE' | 'INACTIVE';
+    folder: { id: number; name: string };
+    file: { id: number; fileName: string; uuid: string };
+  };
+  
+  type PagedResponse<T> = {
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    items: T[];
+  };
   // 프로필 이미지 설정
   useEffect(() => {
     // 로딩 중이면 프로필 설정하지 않음
@@ -74,84 +115,102 @@ export default function Sidebar({ className = "" }: SidebarProps) {
     setIsCollapsed(!isCollapsed);
   };
 
-  const handleFolderRename = (folderId: string) => {
-    // TODO: 폴더 이름 변경 로직
-    console.log('폴더 이름 변경:', folderId);
-    setShowContextMenu(null);
-  };
 
-  const handleFolderDelete = (folderId: string) => {
-    // TODO: 폴더 삭제 로직
-    console.log('폴더 삭제:', folderId);
-    setShowContextMenu(null);
-  };
+
 
   // 컨텍스트 메뉴 외부 클릭 시 닫기
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showContextMenu) {
-        setShowContextMenu(null);
-      }
-    };
-
-    if (showContextMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showContextMenu]);
+    const close = () => setMenuId(null);
+    if (menuId != null) document.addEventListener('click', close);   // ← click 사용
+    return () => document.removeEventListener('click', close);
+  }, [menuId]);
+  
+  
 
   type LectureItem = { id: string; name: string; status: string };
   type LectureFolder = { id: string; name: string; lectures: LectureItem[] };
+  useEffect(() => {
+    let alive = true;
+    if (!isAuthenticated || loading) return;
+  
+    setFoldersLoading(true);
+    setFoldersError(null);
+    getFolders()
+      .then((list) => alive && setFolders(list))
+      .catch((e) => alive && setFoldersError(e.message || '폴더 조회 실패'))
+      .finally(() => alive && setFoldersLoading(false));
+  
+    return () => { alive = false; };
+  }, [isAuthenticated, loading]);
 
-  const initialLectureFolders: LectureFolder[] = [
-    {
-      id: "database",
-      name: "데이터베이스",
-      lectures: [
-        { id: "db1", name: "관계형 DB 설계", status: "완료" },
-        { id: "db2", name: "SQL 최적화", status: "진행중" },
-      ],
-    },
-    {
-      id: "ai-ml",
-      name: "AI/머신러닝",
-      lectures: [
-        { id: "ml1", name: "딥러닝 기초", status: "완료" },
-        { id: "ml2", name: "자연어 처리", status: "완료" },
-        { id: "ml3", name: "컴퓨터 비전", status: "예정" },
-      ],
-    },
-    {
-      id: "web-dev",
-      name: "웹 개발",
-      lectures: [
-        { id: "web1", name: "React 심화", status: "완료" },
-        { id: "web2", name: "Node.js API", status: "진행중" },
-      ],
-    },
-  ];
 
-  const [lectureFolders, setLectureFolders] = useState<LectureFolder[]>(initialLectureFolders);
-
-  const commitCreateFolder = () => {
+  const commitCreateFolder = async () => {
     const trimmed = newFolderName.trim();
-    if (!trimmed) {
-      setIsCreatingFolder(false);
-      setNewFolderName("새로운 폴더");
+    setIsCreatingFolder(false);
+    if (!trimmed) { setNewFolderName('새로운 폴더'); return; }
+  
+    try {
+      await createFolder(trimmed);
+      const refreshed = await getFolders();
+      setFolders(refreshed);
+    } catch (e: any) {
+      alert(e?.message || '폴더 생성 실패');
+    } finally {
+      setNewFolderName('새로운 폴더');
+    }
+  };
+
+  const refreshFolders = async () => {
+    const list = await getFolders();
+    const map = new Map<number, FolderDto>();
+    list.forEach(f => { if (!map.has(f.folderId)) map.set(f.folderId, f); });
+    setFolders(Array.from(map.values()));
+  };
+
+
+  const startRename = (folder: FolderDto) => {
+    setMenuId(null);
+    setRenamingId(folder.folderId);
+    setRenameValue(folder.name ?? '');
+  };
+  
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue('');
+  };
+  
+  const commitRename = async () => {
+    if (renamingId == null) return;
+    const name = renameValue.trim();
+    if (!name) { cancelRename(); return; }
+    if (name.length > 20) { alert('폴더명은 최대 20자입니다.'); return; }
+  
+    try {
+      await updateFolderName(renamingId, name); // PATCH /api/folders/{id} { name }
+      await refreshFolders();
+    } catch (e: any) {
+      alert(e?.message || '폴더명 변경 실패');
+    } finally {
+      cancelRename();
+    }
+  };
+  
+  const handleFolderDelete = async (folder: FolderDto) => {
+    setMenuId(null);
+    if (folder.basic) {
+      alert('기본 폴더는 삭제할 수 없습니다.');
       return;
     }
-    const newFolder: LectureFolder = {
-      id: `folder-${Date.now()}`,
-      name: trimmed,
-      lectures: [],
-    };
-    setLectureFolders((prev) => [newFolder, ...prev]);
-    setIsCreatingFolder(false);
-    setNewFolderName("새로운 폴더");
+    if (!confirm('해당 폴더에 있는 모든 강의노트가 사라집니다. 삭제하시겠습니까?')) return;
+  
+    try {
+      await deleteFolder(folder.folderId); // DELETE /api/folders/{id}
+      await refreshFolders();
+    } catch (e: any) {
+      alert(e?.message || '폴더 삭제 실패');
+    }
   };
+  
 
   const handleSidebarMouseEnter = () => {
     if (hoverTimeout) {
@@ -168,6 +227,34 @@ export default function Sidebar({ className = "" }: SidebarProps) {
     setHoverTimeout(timeout);
   };
 
+  useEffect(() => {
+    let alive = true;
+  
+    (async () => {
+      try {
+        setHistLoading(true);
+        setHistError(null);
+  
+        const data: PagedResponse<LectureHistoryItem> = await fetchHistory({
+          folderId: folderIdParam, // ← 사이드바에서 넘긴 folderId
+          page: 0,
+          size: 10,
+          withAnno: false,
+        });
+  
+        if (!alive) return;
+        setItems(data.items ?? []);
+      } catch (e: any) {
+        if (!alive) return;
+        setHistError(e?.message || '히스토리 조회 실패');
+      } finally {
+        if (alive) setHistLoading(false);
+      }
+    })();
+  
+    return () => { alive = false; };
+  }, [folderIdParam]);
+  
   const menuItems = [
     {
       path: '/dashboard',
@@ -304,75 +391,134 @@ export default function Sidebar({ className = "" }: SidebarProps) {
             </div>
 
             <div className="space-y-1">
-              {isCreatingFolder && (
-                <div className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg bg-[#2A3441]">
-                  <Folder className="w-4 h-4 text-amber-400" />
-                  <input
-                    autoFocus
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    onBlur={commitCreateFolder}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') commitCreateFolder();
-                      if (e.key === 'Escape') {
-                        setIsCreatingFolder(false);
-                        setNewFolderName("새로운 폴더");
-                      }
-                    }}
-                    className="flex-1 bg-white/5 border border-[#3A4551] rounded-md px-2 py-1 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A8C7FA]"
-                    placeholder="새로운 폴더"
-                  />
-                </div>
-              )}
-              {lectureFolders.map((folder) => (
-                <div key={folder.id} className="relative">
-                  <div 
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg group ${
-                      hoveredFolder === folder.id || showContextMenu === folder.id 
-                        ? 'bg-[#2A3441]' 
-                        : 'hover:bg-[#2A3441]'
-                    }`}
-                    onMouseEnter={() => setHoveredFolder(folder.id)}
-                    onMouseLeave={() => setHoveredFolder(null)}
-                  >
-                    <Folder className="w-4 h-4 text-amber-400" />
-                    <Link href={`/folders/${folder.id}`} className="flex-1 text-left">
-                      {folder.name}
-                    </Link>
-                    {(hoveredFolder === folder.id || showContextMenu === folder.id) && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowContextMenu(showContextMenu === folder.id ? null : folder.id);
-                        }}
-                        className="p-1 rounded hover:bg-white/5"
-                      >
-                        <MoreHorizontal className="w-3 h-3 text-gray-400" />
-                      </button>
-                    )}
-                  </div>
+  {isCreatingFolder && (
+    <div className="flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg bg-[#2A3441]">
+      <Folder className="w-4 h-4 text-amber-400" />
+      <input
+        autoFocus
+        value={newFolderName}
+        onChange={(e) => setNewFolderName(e.target.value)}
+        onBlur={commitCreateFolder}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commitCreateFolder();
+          if (e.key === 'Escape') { setIsCreatingFolder(false); setNewFolderName('새로운 폴더'); }
+        }}
+        className="flex-1 bg-white/5 border border-[#3A4551] rounded-md px-2 py-1 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A8C7FA]"
+        placeholder="새로운 폴더"
+      />
+    </div>
+  )}
 
-                  {showContextMenu === folder.id && (
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-fit">
-                      <button
-                        onClick={() => handleFolderRename(folder.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg whitespace-nowrap"
-                      >
-                        <Edit className="w-4 h-4" />
-                        강의명 변경
-                      </button>
-                      <button
-                        onClick={() => handleFolderDelete(folder.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg whitespace-nowrap"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        강의 삭제
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+  {foldersLoading && <div className="px-3 py-2 text-xs text-gray-400">폴더 불러오는 중…</div>}
+  {foldersError && <div className="px-3 py-2 text-xs text-rose-400">{foldersError}</div>}
+  {!foldersLoading && !foldersError && folders.length === 0 && (
+    <div className="px-3 py-2 text-xs text-gray-400">폴더가 없습니다. + 버튼으로 만들어 보세요.</div>
+  )}
+
+  {folders.map((folder) => {
+    const isHover = hoveredFolder === folder.folderId || menuId === folder.folderId;
+    const isRenaming = renamingId === folder.folderId;
+
+    return (
+      <div key={folder.folderId} className="relative">
+        <div
+          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-white rounded-lg group ${
+            isHover ? 'bg-[#2A3441]' : 'hover:bg-[#2A3441]'
+          }`}
+          onMouseEnter={() => setHoveredFolder(folder.folderId)}
+          onMouseLeave={() => setHoveredFolder(null)}
+        >
+          <Folder className="w-4 h-4 text-amber-400" />
+
+          {/* 이름 표시 vs 인라인 수정 */}
+          {isRenaming ? (
+  <input
+    autoFocus
+    value={renameValue}
+    onChange={(e) => setRenameValue(e.target.value)}
+    onBlur={commitRename}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter') commitRename();
+      if (e.key === 'Escape') cancelRename();
+    }}
+    onMouseDown={(e) => e.stopPropagation()}   // ★ 추가(포커스 뺏김 방지)
+    className="flex-1 bg-white/5 border border-[#3A4551] rounded-md px-2 py-1 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#A8C7FA]"
+    placeholder="폴더명"
+  />
+) : (
+    <button
+      type="button"
+      onClick={() => {
+        const sp = new URLSearchParams(window.location.search);
+        sp.set('folderId', String(folder.folderId));   // ← 선택한 폴더
+        // 필요하면 페이지 초기화
+        sp.delete('page');
+        // 히스토리 모드로 열고 싶으면 ↓
+        // sp.set('mode', 'history');
+        router.push(`/dashboard?${sp.toString()}`);
+      }}
+      className="flex-1 text-left"
+    >
+      {folder.name}
+    </button>
+)}
+
+
+          {!isRenaming && (
+          <button
+            onMouseDown={(e) => e.stopPropagation()}   // ★ 추가
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuId(menuId === folder.folderId ? null : folder.folderId);
+            }}
+            className={`p-1 rounded hover:bg-white/5 ${isHover ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition`}
+            type="button"
+          >
+            <MoreHorizontal className="w-3 h-3 text-gray-400" />
+          </button>
+
+          )}
+        </div>
+
+        {/* 컨텍스트 메뉴 */}
+{menuId === folder.folderId && (
+  <div
+    onMouseDown={(e) => e.stopPropagation()}  // ★ 추가
+    className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-fit"
+  >
+    <button
+      onMouseDown={(e) => e.stopPropagation()} // ★ 추가(안전)
+      onClick={() => startRename(folder)}
+      disabled={!!folder.basic}
+      className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 rounded-t-lg whitespace-nowrap ${
+        folder.basic ? 'text-gray-300 cursor-not-allowed' : 'text-gray-700'
+      }`}
+      type="button"
+    >
+      <Edit className="w-4 h-4" />
+      폴더명 변경
+    </button>
+    <button
+      onMouseDown={(e) => e.stopPropagation()} // ★ 추가(안전)
+      onClick={() => handleFolderDelete(folder)}
+      disabled={!!folder.basic}
+      className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-b-lg whitespace-nowrap ${
+        folder.basic ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
+      }`}
+      type="button"
+    >
+      <Trash2 className="w-4 h-4" />
+      폴더 삭제
+    </button>
+  </div>
+)}
+
+      </div>
+    );
+  })}
+</div>
+
+
           </div>
 
           {/* 남은 시간 위젯 (추후 유료화를 위해 일단 넣음) */}
