@@ -44,7 +44,10 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
   const startRecording = async () => {
     try {
       const url = new URL(process.env.NEXT_PUBLIC_API_WSS_URL!);
-      url.searchParams.set("fileId", String(fileIdRef.current));
+      // fileId가 있으면 쿼리에 포함, 없으면 생략하여 STT만 테스트 가능
+      if (fileIdRef.current !== undefined && fileIdRef.current !== null && String(fileIdRef.current) !== "") {
+        url.searchParams.set("fileId", String(fileIdRef.current));
+      }
       const ws = new WebSocket(url.toString());
       setSocket(ws);
 
@@ -56,13 +59,13 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
         try {const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamRef.current = stream;
 
-        const audioContext = new AudioContext({ sampleRate: 16000 });
+        const audioContext = new AudioContext({ sampleRate: 16000 }); // 최적의 파라미터 (16kHz)
         audioContextRef.current = audioContext;
 
         const source = audioContext.createMediaStreamSource(stream);
         sourceRef.current = source;
 
-        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        const processor = audioContext.createScriptProcessor(4096, 1, 1); // 최적의 파라미터 (4096 샘플)
         processorRef.current = processor;
 
         source.connect(processor);
@@ -73,8 +76,10 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
           const pcm = convertFloat32ToInt16(input);
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(pcm.buffer);
-            ws.send(JSON.stringify({ type: "init", fileId: fileIdRef.current }));
-
+            // fileId 없이도 동작하도록 init 메시지는 선택적으로만 전송
+            if (fileIdRef.current !== undefined && fileIdRef.current !== null && String(fileIdRef.current) !== "") {
+              ws.send(JSON.stringify({ type: "init", fileId: fileIdRef.current }));
+            }
           }}}
           catch (err) {
             console.error("로그인 오류:", err);
