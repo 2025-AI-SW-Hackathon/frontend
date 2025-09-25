@@ -121,7 +121,7 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
           text: event.data,
           markdown: null,
           answerState: parsed.answerState ?? 1,
-          pageNumber:parsed.pageNumber, 
+          pageNumber: parsed.page, 
         });
         window.dispatchEvent(new Event("annotation-added"));
 
