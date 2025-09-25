@@ -25,49 +25,63 @@ export function AnnotationProvider({ children }: { children: React.ReactNode }) 
   const addAnnotation = (a: Annotation) => {
     try {
       const parsed = JSON.parse(a.text);
-      const paragraphs: string[] = (parsed.refinedText ?? "")
-        .split(/\n\s*\n/)
-        .map((para: string) => para.trim())
-        .filter(Boolean);
+      
+      const audioText = parsed.audioText || "";
+      const annotation = parsed.annotation || "";
+      const page = parsed.page || 1;
       const answerState = parsed.answerState ?? 1;
-      console.log("answerState 파싱 결과:", answerState);
+      
+      console.log("서버 주석 수신:", { audioText, annotation, page, answerState });
+      
       const newAnnotations: Annotation[] = [];
-      const parsedAnswerState = parsed.answerState ?? 1;
-
-
-          // voice가 존재하면 먼저 추가 (파란색)
-      if (parsed.voice) {
+      
+      // 1. audioText는 "음성" 주석으로 추가 (회색, answerState=2)
+      if (audioText.trim()) {
         newAnnotations.push({
-          id: `${a.id}-voice`,
-          text: JSON.stringify({ refinedText: parsed.voice }),
+          id: `${a.id}-audio`,
+          text: JSON.stringify({ 
+            refinedText: audioText,
+            source: "음성"
+          }),
           markdown: a.markdown ?? null,
           answerState: 2,
-          pageNumber: parsed.pageNumber,
+          pageNumber: page,
         });
       }
 
-      // refinedText가 있으면 문단마다 추가 (노란색)
-      if (paragraphs.length > 0) {
-        newAnnotations.push(
-          ...paragraphs.map((para, idx) => ({
-            id: `${a.id}-p${idx}`,
-            text: JSON.stringify({ refinedText: para }),
-            markdown: a.markdown ?? null,
-            answerState: parsedAnswerState,
-            pageNumber: parsed.pageNumber,
-          }))
-        );
+      // 2. annotation은 answerState에 따라 "자료기반" 또는 "외부검색" 주석으로 추가
+      if (annotation.trim()) {
+        const paragraphs: string[] = annotation
+          .split(/\n\s*\n/)
+          .map((para: string) => para.trim())
+          .filter(Boolean);
+          
+        if (paragraphs.length > 0) {
+          // answerState에 따른 주석 타입 결정
+          const annotationType = answerState === 1 ? "외부검색" : "자료기반";
+          
+          newAnnotations.push(
+            ...paragraphs.map((para, idx) => ({
+              id: `${a.id}-anno-${idx}`,
+              text: JSON.stringify({ 
+                refinedText: para,
+                source: annotationType
+              }),
+              markdown: a.markdown ?? null,
+              answerState: answerState,
+              pageNumber: page,
+            }))
+          );
+        }
       }
 
-
-  
-    // 실제 등록
-    setAnnotations((prev) => [...prev, ...newAnnotations]);
-  } catch (err) {
-    console.error("🔴 JSON 파싱 실패. 원본 그대로 추가:", err);
-    setAnnotations((prev) => [...prev, a]);
-  }
-};
+      // 실제 등록
+      setAnnotations((prev) => [...prev, ...newAnnotations]);
+    } catch (err) {
+      console.error("🔴 JSON 파싱 실패. 원본 그대로 추가:", err);
+      setAnnotations((prev) => [...prev, a]);
+    }
+  };
   
   
   
