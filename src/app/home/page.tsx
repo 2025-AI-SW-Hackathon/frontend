@@ -233,9 +233,16 @@ export default function Home() {
           const headers: Record<string, string> = {};
           try {
             const { auth } = require("@/lib/auth");
-            const token = auth.getAccessToken?.();
-            if (token) headers["Authorization"] = `Bearer ${token}`;
-          } catch {}
+            const token = auth.getAccessToken();
+            if (token) {
+              headers["Authorization"] = `Bearer ${token}`;
+              console.log("✅ 인증 토큰 전송:", token.substring(0, 20) + "...");
+            } else {
+              console.log("❌ 인증 토큰 없음");
+            }
+          } catch (e) {
+            console.error("❌ 인증 토큰 가져오기 실패:", e);
+          }
           return headers;
         })(),
         body: formData,

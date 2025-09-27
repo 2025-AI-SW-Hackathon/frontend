@@ -45,15 +45,53 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
 
   const startRecording = async () => {
     try {
-      const url = new URL(process.env.NEXT_PUBLIC_API_WSS_URL!);
+      // 1. 먼저 WebSocket 인증 토큰 발급
+      let connectionToken: string | null = null;
+      try {
+        const { auth } = await import("@/lib/auth");
+        const token = auth.getAccessToken();
+        if (!token) {
+          alert("로그인이 필요합니다.");
+          return;
+        }
+
+        const authResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'}/api/websocket/auth`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!authResponse.ok) {
+          throw new Error(`인증 실패: ${authResponse.status}`);
+        }
+
+        const authData = await authResponse.json();
+        connectionToken = authData.connectionToken;
+        console.log("🔑 [WebSocket] 인증 성공, connectionToken 발급됨");
+      } catch (e) {
+        console.error("❌ [WebSocket] 인증 실패:", e);
+        alert("WebSocket 인증에 실패했습니다.");
+        return;
+      }
+
+      // 2. WebSocket 연결
+      const url = new URL(process.env.NEXT_PUBLIC_API_WSS_URL || 'ws://localhost:8080/ws/audio');
       // fileId가 있으면 쿼리에 포함, 없으면 생략하여 STT만 테스트 가능
       if (fileIdRef.current !== undefined && fileIdRef.current !== null && String(fileIdRef.current) !== "") {
         url.searchParams.set("fileId", String(fileIdRef.current));
       }
+      // connectionToken을 쿼리 파라미터로 추가
+      if (connectionToken) {
+        url.searchParams.set("token", connectionToken);
+      }
+      
       const ws = new WebSocket(url.toString());
       setSocket(ws);
 
       ws.onopen = async () => {
+        console.log("🔗 [WebSocket] 연결 성공");
         // 무음 keep-alive 시작 (마이크 준비 전 타임아웃 방지)
         if (!keepAliveIntervalRef.current) {
           keepAliveIntervalRef.current = setInterval(() => {
@@ -128,14 +166,21 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
       };
 
       ws.onerror = (err) => {
-        console.error("WebSocket 오류:", err);
+        console.error("❌ [WebSocket] 연결 오류:", err);
+        console.error("❌ [WebSocket] URL:", url.toString());
+        alert("WebSocket 연결에 실패했습니다. 서버가 실행 중인지 확인해주세요.");
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
+        console.log("🔌 [WebSocket] 연결 종료:", event.code, event.reason);
+        if (event.code !== 1000) { // 정상 종료가 아닌 경우
+          alert(`연결이 종료되었습니다. (코드: ${event.code})`);
+        }
         stopRecordingInternal();
         setSocket(null);
       };
     } catch (err) {
+      console.error("❌ [STT] 시작 실패:", err);
       alert("마이크 권한이 필요하거나 연결에 실패했습니다.");
     }
   };
