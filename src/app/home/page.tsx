@@ -25,6 +25,7 @@ export default function Home() {
   const [renderedSizes, setRenderedSizes] = useState<Record<number, { width: number; height: number }>>({});
   const [containerWidth, setContainerWidth] = useState<number>(600);
   const [isPdfReady, setIsPdfReady] = useState(false);
+  const [isPdfProcessing, setIsPdfProcessing] = useState(false);
   const [versionMeta, setVersionMeta] = useState<{version?: number; latest?: boolean; snapshotCreatedAt?: string}>({});
   type RenderedSizes = Record<number, { width: number; height: number }>;
   const [fileName, setFileName] = useState<string>("");
@@ -39,6 +40,46 @@ export default function Home() {
   const qpFileId = sp.get("fileId");
   const qpVersion = sp.get("version");
   const isHistoryMode = mode === "history";
+
+  // ====== PDF 처리 상태 확인 (업로드 모드) ======
+  useEffect(() => {
+    if (isHistoryMode) return;
+    if (!fileId || isPdfReady) return;
+    
+    // PDF 처리 중일 때 주기적으로 상태 확인
+    const checkPdfStatus = async () => {
+      try {
+        const res = await fetch(`/api/pdf/ready?fileId=${fileId}`, {
+          headers: (() => {
+            const headers: Record<string, string> = {};
+            try {
+              const { auth } = require("@/lib/auth");
+              const token = auth.getAccessToken();
+              if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+              }
+            } catch (e) {
+              console.error("❌ 인증 토큰 가져오기 실패:", e);
+            }
+            return headers;
+          })(),
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === "ready") {
+            setIsPdfReady(true);
+            setIsPdfProcessing(false);
+          }
+        }
+      } catch (e) {
+        console.error("PDF 상태 확인 실패:", e);
+      }
+    };
+    
+    const interval = setInterval(checkPdfStatus, 2000); // 2초마다 확인
+    return () => clearInterval(interval);
+  }, [fileId, isPdfReady, isHistoryMode, API_BASE_URL]);
 
   // ====== 최신 스냅샷 (업로드 모드) ======
   useEffect(() => {
@@ -223,6 +264,10 @@ export default function Home() {
       setOriginalPdfBytes(bytes);
       setPdfUrl(null); // 업로드 모드에선 objectURL 안 써도 됨
       setPdfFile(file);
+      
+      // PDF 처리 시작
+      setIsPdfProcessing(true);
+      setIsPdfReady(false);
 
       const formData = new FormData();
       formData.append("file", file);
@@ -252,10 +297,17 @@ export default function Home() {
       const data = JSON.parse(text);
 
       if (data.fileId) setFileId(data.fileId);
-      if (data.status === "ready") setIsPdfReady(true);
+      if (data.status === "ready") {
+        setIsPdfReady(true);
+        setIsPdfProcessing(false);
+      } else {
+        // processing 상태로 대기
+        console.log("📄 PDF 처리 중... fileId:", data.fileId);
+      }
     } catch (e) {
       console.error(e);
       alert("PDF 업로드 실패");
+      setIsPdfProcessing(false);
     }
   }
 
@@ -416,10 +468,14 @@ export default function Home() {
     <div className="flex h-screen">
       <Sidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
-      <Header fileId={fileId} fileName={fileName} onFileNameUpdated={setFileName} />
+      <Header fileId={fileId} fileName={fileName} onFileNameUpdated={setFileName} isPdfReady={isPdfReady} />
               <main className="flex flex-1 h-0">
           {!pdfFile && !pdfUrl ? (
             <UploadArea />
+          ) : isPdfProcessing ? (
+            <div className="w-full flex items-center justify-center text-gray-600 text-3xl animate-pulse">
+              ⏳ PDF 분석 중입니다...
+            </div>
           ) : !isPdfReady ? (
             <div className="w-full flex items-center justify-center text-gray-600 text-3xl animate-pulse">
               ⏳ PDF 분석 중입니다...

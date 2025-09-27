@@ -11,9 +11,10 @@ type HeaderProps = {
   fileId?: number | string | null;
   fileName?: string;
   onFileNameUpdated?: (newName: string) => void; // 부모가 쓸 수 있음(선택)
+  isPdfReady?: boolean;
 };
 
-export default function Header({ fileId, fileName, onFileNameUpdated }: HeaderProps) {
+export default function Header({ fileId, fileName, onFileNameUpdated, isPdfReady = false }: HeaderProps) {
   const router = useRouter();
 
   // 화면에 보여줄 파일명은 로컬 상태로 관리 (낙관적 갱신용)
@@ -141,7 +142,7 @@ export default function Header({ fileId, fileName, onFileNameUpdated }: HeaderPr
         </div>
 
         <div className="flex items-center gap-3">
-          <STTRecorder fileId={fileId} />
+          <STTRecorder fileId={fileId} isPdfReady={isPdfReady} />
         </div>
       </div>
 

@@ -8,9 +8,10 @@ import STOP from "@/components/image/stop.svg";
 
 type STTRecorderProps = {
   fileId?: string | number | null;
+  isPdfReady?: boolean;
 };
 
-export default function STTRecorder({ fileId }: STTRecorderProps) {
+export default function STTRecorder({ fileId, isPdfReady = false }: STTRecorderProps) {
   const { addAnnotation } = useAnnotation();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -45,6 +46,12 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
 
   const startRecording = async () => {
     try {
+      // PDF 준비 상태 체크
+      if (!isPdfReady) {
+        alert("PDF 분석이 끝나고 녹음이 가능합니다. 조금만 기다려 주세요.");
+        return;
+      }
+      
       // 1. 먼저 WebSocket 인증 토큰 발급
       let connectionToken: string | null = null;
       try {
@@ -235,7 +242,7 @@ export default function STTRecorder({ fileId }: STTRecorderProps) {
         </>
       ) : (
           <button
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-400 text-gray-800 text-sm bg-white"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-400 text-gray-800 text-sm bg-white hover:bg-gray-50"
             onClick={startRecording}
           >
           <Image src={PLAY} alt="Play" width={14} height={14} />
