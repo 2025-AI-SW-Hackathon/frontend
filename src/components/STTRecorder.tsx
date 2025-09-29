@@ -52,35 +52,34 @@ export default function STTRecorder({ fileId, isPdfReady = false }: STTRecorderP
         return;
       }
       
-      // 1. 먼저 WebSocket 인증 토큰 발급
+      // 1. WebSocket 인증 토큰 발급 (로그인한 사용자만)
       let connectionToken: string | null = null;
       try {
         const { auth } = await import("@/lib/auth");
         const token = auth.getAccessToken();
-        if (!token) {
-          alert("로그인이 필요합니다.");
-          return;
-        }
+        
+        if (token) {
+          // 로그인한 사용자: 인증 토큰 발급
+          const authResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'}/api/websocket/auth`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
 
-        const authResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'}/api/websocket/auth`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+          if (authResponse.ok) {
+            const authData = await authResponse.json();
+            connectionToken = authData.connectionToken;
+            console.log("🔑 [WebSocket] 인증 성공, connectionToken 발급됨");
+          } else {
+            console.warn("⚠️ [WebSocket] 인증 실패, 로그인하지 않은 사용자로 진행");
           }
-        });
-
-        if (!authResponse.ok) {
-          throw new Error(`인증 실패: ${authResponse.status}`);
+        } else {
+          console.log("ℹ️ [WebSocket] 로그인하지 않은 사용자, 인증 없이 진행");
         }
-
-        const authData = await authResponse.json();
-        connectionToken = authData.connectionToken;
-        console.log("🔑 [WebSocket] 인증 성공, connectionToken 발급됨");
       } catch (e) {
-        console.error("❌ [WebSocket] 인증 실패:", e);
-        alert("WebSocket 인증에 실패했습니다.");
-        return;
+        console.warn("⚠️ [WebSocket] 인증 실패, 로그인하지 않은 사용자로 진행:", e);
       }
 
       // 2. WebSocket 연결
