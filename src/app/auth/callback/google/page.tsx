@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { SocialInfoRes } from '@/types/auth';
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -43,30 +43,27 @@ export default function GoogleCallbackPage() {
             window.location.href = '/dashboard';
           }, 1000);
         }
-      } catch (error: any) {
-        console.error('Google 로그인 에러:', error);
-        
-        // 백엔드 서버가 응답하지 않는 경우 임시 처리
-        if (error.message.includes('<!DOCTYPE') || error.message.includes('Unexpected token') || error.message.includes('Failed to fetch')) {
+      } catch (e: any) {
+        console.error('Google 로그인 에러:', e);
+        if (e.message?.includes('<!DOCTYPE') || e.message?.includes('Unexpected token') || e.message?.includes('Failed to fetch')) {
           setError('백엔드 서버에 연결할 수 없습니다. CORS 설정과 Spring Security 설정을 확인해주세요.');
           setStatus('error');
           return;
         }
         
-        if (error.code === 'USER_NOT_FOUND') {
+        if (e.code === 'USER_NOT_FOUND') {
           // 회원가입이 필요한 경우
           // 실제로는 에러 응답에서 result를 파싱해야 함
-          const socialInfo = error.result as SocialInfoRes;
+          const socialInfo = e.result as SocialInfoRes;
           
           // 회원가입 페이지로 이동
           router.push(`/signup?socialInfo=${encodeURIComponent(JSON.stringify(socialInfo))}&socialType=google`);
         } else {
-          setError(error.message || '로그인 중 오류가 발생했습니다.');
+          setError(e.message || '로그인 중 오류가 발생했습니다.');
           setStatus('error');
         }
       }
     };
-
     handleCallback();
   }, [searchParams, router]);
 
@@ -110,4 +107,21 @@ export default function GoogleCallbackPage() {
   }
 
   return null;
-} 
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Google 로그인 처리 중...</p>
+          </div>
+        </div>
+      }
+    >
+      <GoogleCallbackContent />
+    </Suspense>
+  );
+}

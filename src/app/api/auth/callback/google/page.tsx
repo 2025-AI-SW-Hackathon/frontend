@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -19,7 +19,7 @@ export default function GoogleCallbackPage() {
       if (error) {
         setError('Google 로그인이 취소되었습니다.');
         setStatus('error');
-        return;
+        return;``
       }
 
       if (!code) {
@@ -32,7 +32,7 @@ export default function GoogleCallbackPage() {
         // 백엔드 API 호출
         const response = await api.googleLogin(code);
         
-        if (response.isSuccess) {
+        if (response.isSuccess) {``
           // 로그인 성공 - JWT 토큰 저장
           auth.setTokens({
             userId: response.result.userId,
@@ -111,3 +111,20 @@ export default function GoogleCallbackPage() {
 
   return null;
 } 
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Google 로그인 처리 중...</p>
+          </div>
+        </div>
+      }
+    >
+      <GoogleCallbackContent />
+    </Suspense>
+  );
+}

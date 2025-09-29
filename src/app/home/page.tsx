@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import UploadArea from "@/components/UploadArea";
@@ -15,7 +16,7 @@ import { useSearchParams } from "next/navigation";
 import { FileAnnotationResponse } from "@/types/FileAnnotationResponse";
 import { useAuth } from "@/components/AuthContext";
 
-export default function Home() {
+function HomeContent() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [originalPdfBytes, setOriginalPdfBytes] = useState<ArrayBuffer | null>(null); // ⬅️ 원본 바이트 캐시
@@ -526,5 +527,22 @@ export default function Home() {
         />
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">홈 로딩 중...</p>
+          </div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }
