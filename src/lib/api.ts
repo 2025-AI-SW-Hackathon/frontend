@@ -1,7 +1,7 @@
 import { LoginResponse, BaseResponse } from '@/types/auth';
 import { FileAnnotationResponse } from '@/types/FileAnnotationResponse';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
 export class ApiError extends Error {
   constructor(

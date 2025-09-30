@@ -30,7 +30,7 @@ function HomeContent() {
   const [versionMeta, setVersionMeta] = useState<{version?: number; latest?: boolean; snapshotCreatedAt?: string}>({});
   type RenderedSizes = Record<number, { width: number; height: number }>;
   const [fileName, setFileName] = useState<string>("");
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+  const API_BASE_URL = 'https://speaknote.site';
   const { user } = useAuth();
 
   type ServerSlide = { pageNumber: number; annotations: any[] };
@@ -88,7 +88,7 @@ function HomeContent() {
     if (!isPdfReady || !fileId) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/annotations?fileId=${fileId}`, {
+        const res = await fetch(`/api/annotations?fileId=${fileId}`, {
           headers: (() => {
             const headers: Record<string, string> = {};
             try {
@@ -273,7 +273,7 @@ function HomeContent() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(`${API_BASE_URL}/api/pdf/upload`, {
+      const res = await fetch(`/api/pdf/upload`, {
         method: "POST",
         headers: (() => {
           const headers: Record<string, string> = {};

@@ -88,8 +88,8 @@ export const auth = {
 export const googleAuth = {
   getAuthUrl(): string {
     const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
-    const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const REDIRECT_URI = 'http://localhost:3000/api/auth/callback/google';
+    const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1035006103963-v1kmam8e2sigpk04k2bdkesoo0kfa4kf.apps.googleusercontent.com';
+    const REDIRECT_URI = 'https://speaknote.site/callback/google';
 
     if (!CLIENT_ID) {
       throw new Error('Google OAuth 설정이 누락되었습니다.');

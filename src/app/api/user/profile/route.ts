@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const token = authHeader.substring(7); // 'Bearer ' 제거
 
     // 백엔드 API 호출
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+    const backendUrl = process.env.BACKEND_URL || 'https://speaknote.site';
     const apiUrl = `${backendUrl}/app/users/profile`;
     
     const response = await fetch(apiUrl, {

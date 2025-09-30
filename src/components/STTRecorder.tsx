@@ -16,7 +16,7 @@ export default function STTRecorder({ fileId, isPdfReady = false }: STTRecorderP
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0); // 초 단위 시간
-  const API_WSS_URL = process.env.NEXT_PUBLIC_API_WSS_URL;
+  const API_WSS_URL = process.env.NEXT_PUBLIC_API_WSS_URL || 'wss://speaknote.site/ws/audio';
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const keepAliveIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -60,7 +60,7 @@ export default function STTRecorder({ fileId, isPdfReady = false }: STTRecorderP
         
         if (token) {
           // 로그인한 사용자: 인증 토큰 발급
-          const authResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'}/api/websocket/auth`, {
+          const authResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://speaknote.site'}/api/websocket/auth`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -83,7 +83,7 @@ export default function STTRecorder({ fileId, isPdfReady = false }: STTRecorderP
       }
 
       // 2. WebSocket 연결
-      const url = new URL(process.env.NEXT_PUBLIC_API_WSS_URL || 'ws://localhost:8080/ws/audio');
+      const url = new URL(process.env.NEXT_PUBLIC_API_WSS_URL || 'wss://speaknote.site/ws/audio');
       // fileId가 있으면 쿼리에 포함, 없으면 생략하여 STT만 테스트 가능
       if (fileIdRef.current !== undefined && fileIdRef.current !== null && String(fileIdRef.current) !== "") {
         url.searchParams.set("fileId", String(fileIdRef.current));

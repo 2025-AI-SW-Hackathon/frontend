@@ -23,7 +23,7 @@ export type LectureHistoryItem = {
   };
   
   const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://speaknote.site';
   
   export function buildAuthHeaders(): Record<string, string> {
     // 이미 쓰는 방식이 있다면 이 함수 제거하고 기존 것을 import 해도 됨.

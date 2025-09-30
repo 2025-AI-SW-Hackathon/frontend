@@ -7,3 +7,32 @@ build
 .vscode
 .env
 .env.*
+
+# Node / Next
+node_modules
+.next/cache
+.next/trace
+.next/types
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# VCS
+.git
+.gitignore
+
+# OS/IDE
+.DS_Store
+*.swp
+*.swo
+.vscode
+.idea
+
+# Docker/Compose
+Dockerfile
+docker-compose.yml
+
+# Env / secrets
+.env
+.env.*
+!.env.example
