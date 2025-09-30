@@ -1,14 +1,14 @@
 .git
 node_modules
-.next
+.next*
 dist
 build
 .cache
 .vscode
-.env
-.env.*
+.env.local
+.next
 
-# Node / Next
+
 node_modules
 .next/cache
 .next/trace
@@ -28,11 +28,5 @@ yarn.lock
 .vscode
 .idea
 
-# Docker/Compose
 Dockerfile
 docker-compose.yml
-
-# Env / secrets
-.env
-.env.*
-!.env.example
