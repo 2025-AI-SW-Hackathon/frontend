@@ -30,8 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (auth.isLoggedIn()) {
         try {
           // 백엔드에서 사용자 정보 가져오기
-          const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-          const response = await fetch(`${backendUrl}/app/users/profile`, {
+          const response = await fetch('/api/user/profile', {
             headers: {
               'Authorization': `Bearer ${auth.getAccessToken()}`,
             },
@@ -84,8 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setUserFromTokens = async () => {
     if (auth.isLoggedIn()) {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
-        const response = await fetch(`${backendUrl}/app/users/profile`, {
+        const response = await fetch('/api/user/profile', {
           headers: {
             'Authorization': `Bearer ${auth.getAccessToken()}`,
           },
